@@ -1,5 +1,5 @@
 [package]
-name = "polygon"
+name = "asteroids"
 version = "0.1.0"
 authors = ["Justin Mimbs <justin.mimbs@gmail.com>"]
 edition = "2018"
