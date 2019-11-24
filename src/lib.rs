@@ -1,8 +1,11 @@
+use rand::{Rng, SeedableRng};
+use rand_pcg::Pcg32;
 use std::f64::consts::PI;
 use wasm_bindgen::prelude::*;
 
 #[wasm_bindgen]
 pub struct App {
+    rng: Pcg32,
     asteroids: Vec<Asteroid>,
 }
 
@@ -38,6 +41,13 @@ impl Point {
         Point { x, y }
     }
 
+    pub fn from_polar(radius: f64, angle: Radians) -> Self {
+        Point {
+            x: radius * angle.cos(),
+            y: radius * angle.sin(),
+        }
+    }
+
     pub fn scale(&mut self, factor: f64) -> &mut Self {
         self.x *= factor;
         self.y *= factor;
@@ -64,12 +74,48 @@ impl Placement {
 }
 
 impl Asteroid {
-    pub fn shape() -> Vec<Point> {
-        let mut polygon = ngon(5);
-        for point in polygon.iter_mut() {
-            point.scale(50.0);
+    pub fn new(rng: &mut Pcg32) -> Self {
+        let radius: f64 = rng.gen_range(25.0, 55.0);
+        Asteroid {
+            placement: Placement {
+                position: Point::new(0.0, 0.0),
+                rotation: 0.0,
+            },
+            movement: Movement {
+                velocity: Point::from_polar(
+                    rng.gen_range(10.0, 80.0),
+                    rng.gen_range(0.0, 2.0 * PI),
+                ),
+                angular_velocity: rng.gen_range(-1.0, 1.0),
+            },
+            polygon: Asteroid::shape(rng, radius),
         }
-        polygon
+    }
+
+    pub fn shape(rng: &mut Pcg32, radius: f64) -> Vec<Point> {
+        let n: u32 = rng.gen_range((radius / 5.0).floor() as u32, (radius / 4.0).ceil() as u32);
+        let angle = (2.0 * PI) / (n as f64);
+        (0..n)
+            .map(|i| {
+                Point::from_polar(
+                    radius * rng.gen_range(0.6, 1.0),
+                    angle * (i as f64) + angle * rng.gen_range(0.1, 1.0),
+                )
+            })
+            .collect()
+    }
+
+    pub fn grid(rng: &mut Pcg32, cols: u32, rows: u32) -> Vec<Asteroid> {
+        let mut list = Vec::with_capacity((cols * rows) as usize);
+        for row in 0..rows {
+            for col in 0..cols {
+                let mut asteroid = Asteroid::new(rng);
+                asteroid.placement.position.x = (100 + col * 200) as f64;
+                asteroid.placement.position.y = (100 + row * 200) as f64;
+                list.push(asteroid);
+            }
+        }
+        list
     }
 
     pub fn step(&mut self, dt: f64) -> &mut Self {
@@ -89,18 +135,10 @@ impl Asteroid {
 #[wasm_bindgen]
 impl App {
     pub fn new() -> Self {
+        let mut rng = Pcg32::seed_from_u64(1979);
         App {
-            asteroids: vec![Asteroid {
-                placement: Placement {
-                    position: Point::new(90.0, 90.0),
-                    rotation: 0.0,
-                },
-                movement: Movement {
-                    velocity: Point::new(50.0, 50.0),
-                    angular_velocity: PI / 2.0,
-                },
-                polygon: Asteroid::shape(),
-            }],
+            asteroids: Asteroid::grid(&mut rng, 5, 3),
+            rng,
         }
     }
 
@@ -154,10 +192,7 @@ fn ngon(n: u32) -> Vec<Point> {
     let angle = (2.0 * PI) / (n as f64);
 
     (0..n)
-        .map(|i| {
-            let theta = angle * (i as f64);
-            Point::new(theta.cos(), theta.sin())
-        })
+        .map(|i| Point::from_polar(1.0, angle * (i as f64)))
         .collect()
 }
 

@@ -6,6 +6,8 @@ edition = "2018"
 
 [dependencies]
 wasm-bindgen = "0.2.55"
+rand = "0.7"
+rand_pcg = "0.2"
 
 [lib]
 crate-type = ["cdylib"]
