@@ -14,6 +14,7 @@ async function main() {
     app = App.new();
     time = Date.now();
 
+    canvas.style.background = '#eeeeee';
     canvas.width = 1200;
     canvas.height = 900;
     context.strokeStyle = '#666666';

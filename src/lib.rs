@@ -71,6 +71,12 @@ impl Placement {
         self.rotation += movement.angular_velocity * dt;
         self
     }
+
+    pub fn wrap_position(&mut self, width: f64, height: f64) -> &mut Self {
+        self.position.x = self.position.x.rem_euclid(width);
+        self.position.y = self.position.y.rem_euclid(height);
+        self
+    }
 }
 
 impl Asteroid {
@@ -118,8 +124,21 @@ impl Asteroid {
         list
     }
 
-    pub fn step(&mut self, dt: f64) -> &mut Self {
-        self.placement.apply_movement(&self.movement, dt);
+    pub fn field(rng: &mut Pcg32, width: f64, height: f64, count: u8) -> Vec<Asteroid> {
+        let mut list = Vec::with_capacity(count as usize);
+        for _ in 0..count {
+            let mut asteroid = Asteroid::new(rng);
+            asteroid.placement.position.x = rng.gen_range(0.0, width);
+            asteroid.placement.position.y = rng.gen_range(0.0, height);
+            list.push(asteroid);
+        }
+        list
+    }
+
+    pub fn step(&mut self, width: f64, height: f64, dt: f64) -> &mut Self {
+        self.placement
+            .apply_movement(&self.movement, dt)
+            .wrap_position(width, height);
         self
     }
 
@@ -132,12 +151,15 @@ impl Asteroid {
     }
 }
 
+const WIDTH: f64 = 1200.0;
+const HEIGHT: f64 = 900.0;
+
 #[wasm_bindgen]
 impl App {
     pub fn new() -> Self {
         let mut rng = Pcg32::seed_from_u64(1979);
         App {
-            asteroids: Asteroid::grid(&mut rng, 5, 3),
+            asteroids: Asteroid::field(&mut rng, WIDTH, HEIGHT, 24),
             rng,
         }
     }
@@ -145,7 +167,7 @@ impl App {
     pub fn step(&mut self, dt: f64) -> () {
         if 0.0 < dt {
             for asteroid in self.asteroids.iter_mut() {
-                asteroid.step(dt);
+                asteroid.step(WIDTH, HEIGHT, dt);
             }
         }
     }
