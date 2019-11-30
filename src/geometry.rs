@@ -1,0 +1,76 @@
+use std::f64::consts::PI;
+
+pub type Radians = f64;
+
+#[repr(C)]
+pub struct Point {
+    pub x: f64,
+    pub y: f64,
+}
+
+pub type Vector = Point;
+
+impl Point {
+    pub fn new(x: f64, y: f64) -> Self {
+        Point { x, y }
+    }
+
+    pub fn from_polar(radius: f64, angle: Radians) -> Self {
+        Point {
+            x: radius * angle.cos(),
+            y: radius * angle.sin(),
+        }
+    }
+
+    pub fn scale(&mut self, factor: f64) -> &mut Self {
+        self.x *= factor;
+        self.y *= factor;
+        self
+    }
+
+    pub fn transformed(&self, matrix: &Matrix) -> Self {
+        let x = self.x;
+        let y = self.y;
+        Point {
+            x: x * matrix.a + y * matrix.c + matrix.tx,
+            y: x * matrix.b + y * matrix.d + matrix.ty,
+        }
+    }
+}
+
+// matrix
+
+pub struct Matrix {
+    a: f64,
+    b: f64,
+    c: f64,
+    d: f64,
+    tx: f64,
+    ty: f64,
+}
+
+impl Matrix {
+    pub fn new(position: &Point, rotation: Radians, scale: f64) -> Self {
+        let sine = rotation.sin();
+        let cosine = rotation.cos();
+        Matrix {
+            a: scale * cosine,
+            b: scale * sine,
+            c: scale * -sine,
+            d: scale * cosine,
+            tx: position.x,
+            ty: position.y,
+        }
+    }
+}
+
+// polygons
+
+pub fn ngon(n: u32) -> Vec<Point> {
+    let n = n.max(3);
+    let angle = (2.0 * PI) / (n as f64);
+
+    (0..n)
+        .map(|i| Point::from_polar(1.0, angle * (i as f64)))
+        .collect()
+}
