@@ -1,13 +1,14 @@
 mod asteroid;
 mod geometry;
 mod motion;
+mod view;
+
+use asteroid::Asteroid;
+use view::PathList;
 
 use rand::SeedableRng;
 use rand_pcg::Pcg32;
-use wasm_bindgen::prelude::*;
-
-use asteroid::Asteroid;
-use geometry::Point;
+use wasm_bindgen::prelude::wasm_bindgen;
 
 #[wasm_bindgen]
 pub struct App {
@@ -39,80 +40,7 @@ impl App {
 
     pub fn view(&self) -> PathList {
         let mut list = PathList::new();
-        for asteroid in self.asteroids.iter() {
-            list.push(&mut asteroid.to_path(), 1.0, End::Closed);
-        }
+        view::asteroids(&self.asteroids, &mut list);
         list
-    }
-}
-
-// view
-
-#[repr(C)]
-pub struct Path {
-    offset: usize,
-    length: usize,
-}
-
-#[repr(u8)]
-pub enum End {
-    Open = 0,
-    Closed = 1,
-}
-
-#[wasm_bindgen]
-pub struct PathList {
-    paths: Vec<Path>,
-    alphas: Vec<f64>,
-    ends: Vec<End>,
-    points: Vec<Point>,
-}
-
-impl PathList {
-    pub fn new() -> Self {
-        PathList {
-            paths: Vec::new(),
-            points: Vec::new(),
-            alphas: Vec::new(),
-            ends: Vec::new(),
-        }
-    }
-
-    pub fn push(&mut self, points: &mut Vec<Point>, alpha: f64, end: End) -> &mut Self {
-        self.paths.push(Path {
-            offset: self.points.len(),
-            length: points.len(),
-        });
-        self.alphas.push(alpha);
-        self.ends.push(end);
-        self.points.append(points);
-        self
-    }
-}
-
-#[wasm_bindgen]
-impl PathList {
-    pub fn length(&self) -> usize {
-        self.paths.len()
-    }
-
-    pub fn paths(&self) -> *const Path {
-        self.paths.as_ptr()
-    }
-
-    pub fn alphas(&self) -> *const f64 {
-        self.alphas.as_ptr()
-    }
-
-    pub fn ends(&self) -> *const End {
-        self.ends.as_ptr()
-    }
-
-    pub fn points_length(&self) -> usize {
-        self.points.len()
-    }
-
-    pub fn points(&self) -> *const Point {
-        self.points.as_ptr()
     }
 }
