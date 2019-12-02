@@ -1,5 +1,6 @@
 use crate::asteroid::Asteroid;
 use crate::geometry::Point;
+use crate::player::Player;
 
 use wasm_bindgen::prelude::wasm_bindgen;
 
@@ -76,8 +77,14 @@ impl PathList {
 
 pub fn asteroids<'a>(asteroids: &Vec<Asteroid>, list: &'a mut PathList) -> &'a mut PathList {
     for asteroid in asteroids.iter() {
-        list.push(&mut asteroid.to_path(), 1.0, PathEnd::Closed);
+        list.push(&mut asteroid.to_path(), 0.5, PathEnd::Closed);
     }
 
+    list
+}
+
+pub fn player<'a>(player: &Player, list: &'a mut PathList) -> &'a mut PathList {
+    list.push(&mut player.hull(), 1.0, PathEnd::Closed);
+    list.push(&mut player.interior(), 0.7, PathEnd::Open);
     list
 }

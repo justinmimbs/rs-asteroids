@@ -28,6 +28,13 @@ impl Point {
         self
     }
 
+    pub fn scaled(&self, factor: f64) -> Self {
+        Point {
+            x: self.x * factor,
+            y: self.y * factor,
+        }
+    }
+
     pub fn transformed(&self, matrix: &Matrix) -> Self {
         let x = self.x;
         let y = self.y;
@@ -66,11 +73,11 @@ impl Matrix {
 
 // polygons
 
-pub fn ngon(n: u32) -> Vec<Point> {
+pub fn ngon(n: u8, radius: f64) -> Vec<Point> {
     let n = n.max(3);
     let angle = (2.0 * PI) / (n as f64);
 
     (0..n)
-        .map(|i| Point::from_polar(1.0, angle * (i as f64)))
+        .map(|i| Point::from_polar(radius, angle * (i as f64)))
         .collect()
 }
