@@ -78,7 +78,7 @@ impl Asteroid {
         let matrix = Matrix::new(&self.placement.position, self.placement.rotation, 1.0);
         self.polygon
             .iter()
-            .map(|point| point.transformed(&matrix))
+            .map(|point| point.transform(&matrix))
             .collect()
     }
 }

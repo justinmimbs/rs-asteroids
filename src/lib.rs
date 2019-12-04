@@ -10,7 +10,7 @@ mod view;
 
 use asteroid::Asteroid;
 use geometry::Point;
-use player::Player;
+use player::{Controls, Player};
 use view::PathList;
 
 const WIDTH: f64 = 1200.0;
@@ -34,8 +34,9 @@ impl App {
         }
     }
 
-    pub fn step(&mut self, dt: f64) -> () {
+    pub fn step(&mut self, dt: f64, input: u32) -> () {
         if 0.0 < dt {
+            self.player.step(dt, Controls::new(input));
             for asteroid in self.asteroids.iter_mut() {
                 asteroid.step(WIDTH, HEIGHT, dt);
             }

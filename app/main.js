@@ -32,15 +32,56 @@ async function main() {
     screenCanvas.width = width;
     screenCanvas.height = height;
 
+    window.addEventListener('keydown', handleKey(true));
+    window.addEventListener('keyup', handleKey(false));
+
     render();
     requestAnimationFrame(loop);
+}
+
+const controls = {
+    left: false,
+    right: false,
+    thrust: false,
+};
+
+function bitpackControls() {
+    return 0
+        + (controls.left ? 1 : 0)
+        + (controls.right ? 2 : 0)
+        + (controls.thrust ? 4 : 0);
+}
+
+function handleKey(down) {
+    return function (event) {
+        let control = keyToControl(event.key);
+        if (control !== null) {
+            controls[control] = down;
+        }
+    }
+}
+
+function keyToControl(key) {
+    switch (event.key) {
+        case 'ArrowLeft':
+            return 'left';
+
+        case 'ArrowRight':
+            return 'right';
+
+        case 'ArrowUp':
+            return 'thrust';
+
+        default:
+            return null;
+    }
 }
 
 let i = 0
 
 function loop() {
     const now = Date.now();
-    app.step((now - time) / 1000);
+    app.step((now - time) / 1000, bitpackControls());
     time = now;
     render();
     i += 1;

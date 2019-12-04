@@ -22,20 +22,28 @@ impl Point {
         }
     }
 
-    pub fn scale(&mut self, factor: f64) -> &mut Self {
-        self.x *= factor;
-        self.y *= factor;
-        self
-    }
-
-    pub fn scaled(&self, factor: f64) -> Self {
+    pub fn scale(&self, factor: f64) -> Self {
         Point {
             x: self.x * factor,
             y: self.y * factor,
         }
     }
 
-    pub fn transformed(&self, matrix: &Matrix) -> Self {
+    pub fn add(&self, other: &Point) -> Self {
+        Point {
+            x: self.x + other.x,
+            y: self.y + other.y,
+        }
+    }
+
+    pub fn sub(&self, other: &Point) -> Self {
+        Point {
+            x: self.x - other.x,
+            y: self.y - other.y,
+        }
+    }
+
+    pub fn transform(&self, matrix: &Matrix) -> Self {
         let x = self.x;
         let y = self.y;
         Point {
