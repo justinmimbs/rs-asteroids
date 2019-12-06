@@ -43,13 +43,15 @@ const controls = {
     left: false,
     right: false,
     thrust: false,
+    shield: false,
 };
 
 function bitpackControls() {
     return 0
         + (controls.left ? 1 : 0)
         + (controls.right ? 2 : 0)
-        + (controls.thrust ? 4 : 0);
+        + (controls.thrust ? 4 : 0)
+        + (controls.shield ? 16 : 0);
 }
 
 function handleKey(down) {
@@ -71,6 +73,10 @@ function keyToControl(key) {
 
         case 'ArrowUp':
             return 'thrust';
+
+        case 's':
+        case 'S':
+            return 'shield';
 
         default:
             return null;

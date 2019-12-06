@@ -2,7 +2,7 @@ use rand::Rng;
 use rand_pcg::Pcg32;
 use std::f64::consts::PI;
 
-use crate::geometry::{Matrix, Point, Size};
+use crate::geometry::{Point, Size};
 use crate::motion::{Movement, Placement};
 
 pub struct Asteroid {
@@ -75,10 +75,6 @@ impl Asteroid {
     }
 
     pub fn to_path(&self) -> Vec<Point> {
-        let matrix = Matrix::new(&self.placement.position, self.placement.rotation, 1.0);
-        self.polygon
-            .iter()
-            .map(|point| point.transform(&matrix))
-            .collect()
+        self.placement.transform_path(&self.polygon)
     }
 }

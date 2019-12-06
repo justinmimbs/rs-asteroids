@@ -1,7 +1,7 @@
 use std::f64::consts::PI;
 
 use crate::geometry;
-use crate::geometry::{Matrix, Point, Size, Vector};
+use crate::geometry::{Point, Size, Vector};
 use crate::motion::{Movement, Placement};
 
 const HULL: [Point; 7] = [
@@ -43,9 +43,12 @@ impl Controls {
     pub fn thrust(&self) -> bool {
         self.0 & 4 != 0
     }
+    pub fn shield(&self) -> bool {
+        self.0 & 16 != 0
+    }
 }
 
-pub struct Spaceship {
+struct Spaceship {
     radius: f64,
     hull: Vec<Point>,
     interior: Vec<Point>,
@@ -53,21 +56,27 @@ pub struct Spaceship {
 }
 
 impl Spaceship {
-    pub fn new(radius: f64) -> Self {
+    fn new(radius: f64) -> Self {
         let factor = radius / 22.0;
         Spaceship {
             radius,
             hull: HULL.iter().map(|point| point.scale(factor)).collect(),
             interior: INTERIOR.iter().map(|point| point.scale(factor)).collect(),
-            shield: geometry::ngon(16, radius),
+            shield: geometry::ngon(16, radius + 1.0),
         }
     }
+}
+
+enum Aux {
+    Off,
+    Shielding,
 }
 
 pub struct Player {
     placement: Placement,
     movement: Movement,
     spaceship: Spaceship,
+    aux: Aux,
 }
 
 impl Player {
@@ -82,21 +91,24 @@ impl Player {
                 angular_velocity: 0.0,
             },
             spaceship: Spaceship::new(18.0),
+            aux: Aux::Off,
         }
     }
 
     pub fn hull(&self) -> Vec<Point> {
-        let matrix = Matrix::new(&self.placement.position, self.placement.rotation, 1.0);
-        (self.spaceship.hull.iter())
-            .map(|point| point.transform(&matrix))
-            .collect()
+        self.placement.transform_path(&self.spaceship.hull)
     }
 
     pub fn interior(&self) -> Vec<Point> {
-        let matrix = Matrix::new(&self.placement.position, self.placement.rotation, 1.0);
-        (self.spaceship.interior.iter())
-            .map(|point| point.transform(&matrix))
-            .collect()
+        self.placement.transform_path(&self.spaceship.interior)
+    }
+
+    pub fn shield(&self) -> Option<Vec<Point>> {
+        if let Aux::Shielding = self.aux {
+            Some(self.placement.transform_path(&self.spaceship.shield))
+        } else {
+            None
+        }
     }
 
     pub fn step(&mut self, dt: f64, bounds: &Size, controls: Controls) -> &mut Self {
@@ -125,6 +137,11 @@ impl Player {
         self.placement.position = position;
         self.placement.rotation = rotation;
         self.placement.wrap_position(bounds);
+        self.aux = if controls.shield() {
+            Aux::Shielding
+        } else {
+            Aux::Off
+        };
         self
     }
 }

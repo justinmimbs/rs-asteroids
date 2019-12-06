@@ -1,4 +1,4 @@
-use crate::geometry::{Point, Radians, Size, Vector};
+use crate::geometry::{Matrix, Point, Radians, Size, Vector};
 
 pub struct Placement {
     pub position: Point,
@@ -22,5 +22,12 @@ impl Placement {
         self.position.x = self.position.x.rem_euclid(bounds.width);
         self.position.y = self.position.y.rem_euclid(bounds.height);
         self
+    }
+
+    pub fn transform_path(&self, points: &Vec<Point>) -> Vec<Point> {
+        let matrix = Matrix::new(&self.position, self.rotation, 1.0);
+        (points.iter())
+            .map(|point| point.transform(&matrix))
+            .collect()
     }
 }

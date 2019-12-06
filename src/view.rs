@@ -35,6 +35,9 @@ impl PathList {
     }
 
     pub fn push(&mut self, points: &mut Vec<Point>, alpha: f64, end: PathEnd) -> &mut Self {
+        if points.is_empty() {
+            return self;
+        }
         self.paths.push(Path {
             offset: self.points.len(),
             length: points.len(),
@@ -86,5 +89,8 @@ pub fn asteroids<'a>(asteroids: &Vec<Asteroid>, list: &'a mut PathList) -> &'a m
 pub fn player<'a>(player: &Player, list: &'a mut PathList) -> &'a mut PathList {
     list.push(&mut player.hull(), 1.0, PathEnd::Closed);
     list.push(&mut player.interior(), 0.7, PathEnd::Open);
+    if let Some(mut shield) = player.shield() {
+        list.push(&mut shield, 1.0, PathEnd::Closed);
+    }
     list
 }
