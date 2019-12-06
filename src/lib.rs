@@ -9,12 +9,14 @@ mod player;
 mod view;
 
 use asteroid::Asteroid;
-use geometry::Point;
+use geometry::{Point, Size};
 use player::{Controls, Player};
 use view::PathList;
 
-const WIDTH: f64 = 1200.0;
-const HEIGHT: f64 = 900.0;
+const BOUNDS: Size = Size {
+    width: 1200.0,
+    height: 900.0,
+};
 
 #[wasm_bindgen]
 pub struct App {
@@ -28,17 +30,17 @@ impl App {
     pub fn new() -> Self {
         let mut rng = Pcg32::seed_from_u64(1979);
         App {
-            player: Player::new(Point::new(WIDTH / 2.0, HEIGHT / 2.0)),
-            asteroids: Asteroid::field(&mut rng, WIDTH, HEIGHT, 24),
+            player: Player::new(Point::new(BOUNDS.width / 2.0, BOUNDS.height / 2.0)),
+            asteroids: Asteroid::field(&mut rng, &BOUNDS, 24),
             rng,
         }
     }
 
     pub fn step(&mut self, dt: f64, input: u32) -> () {
         if 0.0 < dt {
-            self.player.step(dt, Controls::new(input));
+            self.player.step(dt, &BOUNDS, Controls::new(input));
             for asteroid in self.asteroids.iter_mut() {
-                asteroid.step(WIDTH, HEIGHT, dt);
+                asteroid.step(dt, &BOUNDS);
             }
         }
     }

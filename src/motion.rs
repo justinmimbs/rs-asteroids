@@ -1,4 +1,4 @@
-use crate::geometry::{Point, Radians, Vector};
+use crate::geometry::{Point, Radians, Size, Vector};
 
 pub struct Placement {
     pub position: Point,
@@ -18,9 +18,9 @@ impl Placement {
         self
     }
 
-    pub fn wrap_position(&mut self, width: f64, height: f64) -> &mut Self {
-        self.position.x = self.position.x.rem_euclid(width);
-        self.position.y = self.position.y.rem_euclid(height);
+    pub fn wrap_position(&mut self, bounds: &Size) -> &mut Self {
+        self.position.x = self.position.x.rem_euclid(bounds.width);
+        self.position.y = self.position.y.rem_euclid(bounds.height);
         self
     }
 }

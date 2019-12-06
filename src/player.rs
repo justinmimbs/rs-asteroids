@@ -1,7 +1,7 @@
 use std::f64::consts::PI;
 
 use crate::geometry;
-use crate::geometry::{Matrix, Point, Vector};
+use crate::geometry::{Matrix, Point, Size, Vector};
 use crate::motion::{Movement, Placement};
 
 const HULL: [Point; 7] = [
@@ -99,7 +99,7 @@ impl Player {
             .collect()
     }
 
-    pub fn step(&mut self, dt: f64, controls: Controls) -> &mut Self {
+    pub fn step(&mut self, dt: f64, bounds: &Size, controls: Controls) -> &mut Self {
         let rotation_thrust = match (controls.left(), controls.right()) {
             (true, false) => -TURNING_SPEED * dt,
             (false, true) => TURNING_SPEED * dt,
@@ -124,6 +124,7 @@ impl Player {
         self.movement.angular_velocity = (rotation - self.placement.rotation) / dt;
         self.placement.position = position;
         self.placement.rotation = rotation;
+        self.placement.wrap_position(bounds);
         self
     }
 }

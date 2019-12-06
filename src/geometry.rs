@@ -2,6 +2,13 @@ use std::f64::consts::PI;
 
 pub type Radians = f64;
 
+pub struct Size {
+    pub width: f64,
+    pub height: f64,
+}
+
+// Point/Vector
+
 #[repr(C)]
 pub struct Point {
     pub x: f64,
@@ -53,7 +60,7 @@ impl Point {
     }
 }
 
-// matrix
+// Matrix
 
 pub struct Matrix {
     a: f64,

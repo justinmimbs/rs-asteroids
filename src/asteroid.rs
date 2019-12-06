@@ -2,7 +2,7 @@ use rand::Rng;
 use rand_pcg::Pcg32;
 use std::f64::consts::PI;
 
-use crate::geometry::{Matrix, Point};
+use crate::geometry::{Matrix, Point, Size};
 use crate::motion::{Movement, Placement};
 
 pub struct Asteroid {
@@ -56,21 +56,21 @@ impl Asteroid {
         list
     }
 
-    pub fn field(rng: &mut Pcg32, width: f64, height: f64, count: u8) -> Vec<Asteroid> {
+    pub fn field(rng: &mut Pcg32, bounds: &Size, count: u8) -> Vec<Asteroid> {
         let mut list = Vec::with_capacity(count as usize);
         for _ in 0..count {
             let mut asteroid = Asteroid::new(rng);
-            asteroid.placement.position.x = rng.gen_range(0.0, width);
-            asteroid.placement.position.y = rng.gen_range(0.0, height);
+            asteroid.placement.position.x = rng.gen_range(0.0, bounds.width);
+            asteroid.placement.position.y = rng.gen_range(0.0, bounds.height);
             list.push(asteroid);
         }
         list
     }
 
-    pub fn step(&mut self, width: f64, height: f64, dt: f64) -> &mut Self {
+    pub fn step(&mut self, dt: f64, bounds: &Size) -> &mut Self {
         self.placement
             .apply_movement(&self.movement, dt)
-            .wrap_position(width, height);
+            .wrap_position(bounds);
         self
     }
 
