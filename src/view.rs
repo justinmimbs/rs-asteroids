@@ -1,4 +1,5 @@
 use crate::asteroid::Asteroid;
+use crate::blast::Blast;
 use crate::geometry::Point;
 use crate::player::Player;
 
@@ -78,19 +79,26 @@ impl PathList {
 
 //
 
-pub fn asteroids<'a>(asteroids: &Vec<Asteroid>, list: &'a mut PathList) -> &'a mut PathList {
-    for asteroid in asteroids.iter() {
-        list.push(&mut asteroid.to_path(), 0.5, PathEnd::Closed);
-    }
-
-    list
-}
-
 pub fn player<'a>(player: &Player, list: &'a mut PathList) -> &'a mut PathList {
     list.push(&mut player.hull(), 1.0, PathEnd::Closed);
     list.push(&mut player.interior(), 0.7, PathEnd::Open);
     if let Some(mut shield) = player.shield() {
         list.push(&mut shield, 1.0, PathEnd::Closed);
+    }
+    list
+}
+
+pub fn asteroids<'a>(asteroids: &Vec<Asteroid>, list: &'a mut PathList) -> &'a mut PathList {
+    for asteroid in asteroids.iter() {
+        list.push(&mut asteroid.to_path(), 0.5, PathEnd::Closed);
+    }
+    list
+}
+
+pub fn blasts<'a>(blasts: &Vec<Blast>, list: &'a mut PathList) -> &'a mut PathList {
+    for blast in blasts.iter() {
+        let (a, b) = blast.endpoints();
+        list.push(&mut vec![a, b], 1.0, PathEnd::Open);
     }
     list
 }

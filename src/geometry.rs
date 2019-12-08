@@ -10,6 +10,7 @@ pub struct Size {
 // Point/Vector
 
 #[repr(C)]
+#[derive(Clone)]
 pub struct Point {
     pub x: f64,
     pub y: f64,
@@ -57,6 +58,10 @@ impl Point {
             x: x * matrix.a + y * matrix.c + matrix.tx,
             y: x * matrix.b + y * matrix.d + matrix.ty,
         }
+    }
+
+    pub fn length(&self) -> f64 {
+        (self.x.powi(2) + self.y.powi(2)).sqrt()
     }
 }
 

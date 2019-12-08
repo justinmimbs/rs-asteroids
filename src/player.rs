@@ -1,8 +1,10 @@
 use std::f64::consts::PI;
 
+use crate::blast::Blast;
 use crate::geometry;
 use crate::geometry::{Point, Size, Vector};
 use crate::motion::{Movement, Placement};
+use crate::util::Timer;
 
 const HULL: [Point; 7] = [
     Point { x: -10.0, y: 19.0 },
@@ -27,6 +29,9 @@ const THRUST_SPEED: f64 = 35.0; // px / second
 const POSITION_FRICTION: f64 = 0.98;
 const ROTATION_FRICTION: f64 = 0.8;
 
+const FIRING_DELAY: f64 = 1.0 / 6.0; // seconds (6 hz)
+const BLAST_SPEED: f64 = 800.0; // px / second
+
 pub struct Controls(u32);
 
 impl Controls {
@@ -42,6 +47,9 @@ impl Controls {
     }
     pub fn thrust(&self) -> bool {
         self.0 & 4 != 0
+    }
+    pub fn fire(&self) -> bool {
+        self.0 & 8 != 0
     }
     pub fn shield(&self) -> bool {
         self.0 & 16 != 0
@@ -69,6 +77,7 @@ impl Spaceship {
 
 enum Aux {
     Off,
+    Firing { timer: Timer },
     Shielding,
 }
 
@@ -123,7 +132,7 @@ impl Player {
             + rotation_thrust;
 
         let position_thrust = if controls.thrust() {
-            Vector::from_polar(THRUST_SPEED * dt, rotation + PI / -2.0)
+            Vector::from_polar(THRUST_SPEED * dt, rotation - PI / 2.0)
         } else {
             Vector::new(0.0, 0.0)
         };
@@ -139,9 +148,28 @@ impl Player {
         self.placement.wrap_position(bounds);
         self.aux = if controls.shield() {
             Aux::Shielding
+        } else if controls.fire() {
+            let mut timer = match &self.aux {
+                Aux::Firing { timer } if timer.is_elapsed() => Timer::new(FIRING_DELAY),
+                Aux::Firing { timer } => timer.clone(),
+                _ => Timer::new(0.0),
+            };
+            timer.step(dt);
+            Aux::Firing { timer }
         } else {
             Aux::Off
         };
         self
+    }
+
+    pub fn fire_blast(&self) -> Option<Blast> {
+        match &self.aux {
+            Aux::Firing { timer } if timer.is_elapsed() => {
+                let speed = self.movement.velocity.length() + BLAST_SPEED;
+                let angle = self.placement.rotation - PI / 2.0;
+                Some(Blast::new(self.placement.position.clone(), speed, angle))
+            }
+            _ => None,
+        }
     }
 }
