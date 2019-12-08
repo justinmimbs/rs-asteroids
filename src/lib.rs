@@ -7,14 +7,14 @@ mod blast;
 mod geometry;
 mod motion;
 mod player;
+mod render;
 mod util;
-mod view;
 
 use asteroid::Asteroid;
 use blast::Blast;
 use geometry::{Point, Size};
 use player::{Controls, Player};
-use view::PathList;
+use render::PathList;
 
 const BOUNDS: Size = Size {
     width: 1200.0,
@@ -56,11 +56,11 @@ impl App {
         self.blasts.retain(|blast| !blast.is_expired());
     }
 
-    pub fn view(&self) -> PathList {
+    pub fn render(&self) -> PathList {
         let mut list = PathList::new();
-        view::player(&self.player, &mut list);
-        view::asteroids(&self.asteroids, &mut list);
-        view::blasts(&self.blasts, &mut list);
+        render::player(&self.player, &mut list);
+        render::asteroids(&self.asteroids, &mut list);
+        render::blasts(&self.blasts, &mut list);
         list
     }
 }

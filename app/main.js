@@ -35,7 +35,7 @@ async function main() {
     window.addEventListener('keydown', handleKey(true));
     window.addEventListener('keyup', handleKey(false));
 
-    render();
+    draw();
     requestAnimationFrame(loop);
 }
 
@@ -95,16 +95,16 @@ function loop() {
     const now = Date.now();
     app.step((now - time) / 1000, bitpackControls());
     time = now;
-    render();
+    draw();
     i += 1;
     if (i < 300) {
         requestAnimationFrame(loop);
     }
 }
 
-function render() {
+function draw() {
     // draw to canvas
-    const list = app.view();
+    const list = app.render();
     const length = list.length();
     const paths = new Uint32Array(memory.buffer, list.paths(), length * 2);
     const alphas = new Float64Array(memory.buffer, list.alphas(), length);
