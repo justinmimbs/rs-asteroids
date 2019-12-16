@@ -1,35 +1,30 @@
 use rand::SeedableRng;
 use rand_pcg::Pcg32;
-use wasm_bindgen::prelude::wasm_bindgen;
 
 mod asteroid;
 mod blast;
 mod geometry;
 mod motion;
 mod player;
-mod render;
 mod util;
 
-use asteroid::Asteroid;
-use blast::Blast;
-use geometry::{Point, Size};
-use player::{Controls, Player};
-use render::PathList;
+pub use asteroid::Asteroid;
+pub use blast::Blast;
+pub use geometry::{Point, Size};
+pub use player::{Controls, Player};
 
 const BOUNDS: Size = Size {
     width: 1200.0,
     height: 900.0,
 };
 
-#[wasm_bindgen]
 pub struct App {
     rng: Pcg32,
-    player: Player,
-    asteroids: Vec<Asteroid>,
-    blasts: Vec<Blast>,
+    pub player: Player,
+    pub asteroids: Vec<Asteroid>,
+    pub blasts: Vec<Blast>,
 }
 
-#[wasm_bindgen]
 impl App {
     pub fn new() -> Self {
         let mut rng = Pcg32::seed_from_u64(1979);
@@ -41,11 +36,11 @@ impl App {
         }
     }
 
-    pub fn step(&mut self, dt: f64, input: u32) -> () {
+    pub fn step(&mut self, dt: f64, controls: Controls) -> () {
         if dt <= 0.0 {
             return ();
         }
-        self.player.step(dt, &BOUNDS, Controls::new(input));
+        self.player.step(dt, &BOUNDS, controls);
         for asteroid in self.asteroids.iter_mut() {
             asteroid.step(dt, &BOUNDS);
         }
@@ -54,13 +49,5 @@ impl App {
             blast.step(dt, &BOUNDS);
         }
         self.blasts.retain(|blast| !blast.is_expired());
-    }
-
-    pub fn render(&self) -> PathList {
-        let mut list = PathList::new();
-        render::player(&self.player, &mut list);
-        render::asteroids(&self.asteroids, &mut list);
-        render::blasts(&self.blasts, &mut list);
-        list
     }
 }

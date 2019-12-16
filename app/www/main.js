@@ -1,4 +1,4 @@
-import init, { App } from './wasm/asteroids.js';
+import init, { App } from './wasm/app.js';
 
 const width = 1200;
 const height = 900;

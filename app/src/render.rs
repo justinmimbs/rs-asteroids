@@ -1,7 +1,4 @@
-use crate::asteroid::Asteroid;
-use crate::blast::Blast;
-use crate::geometry::Point;
-use crate::player::Player;
+use asteroids::{Asteroid, Blast, Player, Point};
 
 use wasm_bindgen::prelude::wasm_bindgen;
 

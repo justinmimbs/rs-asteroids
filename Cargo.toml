@@ -1,13 +1,5 @@
-[package]
-name = "asteroids"
-version = "0.1.0"
-authors = ["Justin Mimbs <justin.mimbs@gmail.com>"]
-edition = "2018"
-
-[dependencies]
-wasm-bindgen = "0.2.55"
-rand = "0.7"
-rand_pcg = "0.2"
-
-[lib]
-crate-type = ["cdylib"]
+[workspace]
+members = [
+    "asteroids",
+    "app",
+]

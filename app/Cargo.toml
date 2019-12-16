@@ -1,0 +1,12 @@
+[package]
+name = "app"
+version = "0.1.0"
+authors = ["Justin Mimbs <justin.mimbs@gmail.com>"]
+edition = "2018"
+
+[dependencies]
+asteroids = { path = "../asteroids" }
+wasm-bindgen = "0.2.55"
+
+[lib]
+crate-type = ["cdylib"]
