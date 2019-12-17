@@ -3,9 +3,9 @@ import init, { App } from './wasm/app.js';
 const width = 1200;
 const height = 900;
 
-const canvas = document.createElement('canvas')
+const canvas = document.createElement('canvas');
 const context = canvas.getContext('2d');
-const screenCanvas = document.querySelector('#canvas')
+const screenCanvas = document.querySelector('#canvas');
 const screenContext = screenCanvas.getContext('2d');
 
 let app;

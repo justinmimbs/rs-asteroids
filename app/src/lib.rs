@@ -2,8 +2,7 @@ use wasm_bindgen::prelude::wasm_bindgen;
 
 use asteroids::Controls;
 
-mod render;
-
+pub mod render;
 use render::PathList;
 
 #[wasm_bindgen]

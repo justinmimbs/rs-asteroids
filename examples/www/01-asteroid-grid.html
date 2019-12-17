@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta charset="utf-8">
+        <title>Asteroid Grid</title>
+    </head>
+    <body>
+        <canvas id="canvas"></canvas>
+        <script type="module">
+
+import init, { asteroid_grid } from './wasm/examples.js';
+import createScreen from './screen.js';
+
+async function main() {
+    const wasm = await init();
+    const screen = createScreen(wasm.memory, document.querySelector('#canvas'));
+
+    screen.draw(asteroid_grid(1979, 6, 4));
+}
+
+main();
+
+        </script>
+    </body>
+</html>
