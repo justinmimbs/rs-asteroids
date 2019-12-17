@@ -56,7 +56,7 @@ impl Asteroid {
         list
     }
 
-    pub fn field(rng: &mut Pcg32, bounds: &Size, count: u8) -> Vec<Asteroid> {
+    pub fn field(rng: &mut Pcg32, bounds: &Size, count: u32) -> Vec<Asteroid> {
         let mut list = Vec::with_capacity(count as usize);
         for _ in 0..count {
             let mut asteroid = Asteroid::new(rng);
