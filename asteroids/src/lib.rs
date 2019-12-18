@@ -5,12 +5,14 @@ mod asteroid;
 mod blast;
 mod geometry;
 mod motion;
+mod particle;
 mod player;
 mod util;
 
 pub use asteroid::Asteroid;
 pub use blast::Blast;
-pub use geometry::{Point, Size};
+pub use geometry::{Point, Size, Vector};
+pub use particle::{Dispersion, Particle};
 pub use player::{Controls, Player};
 
 const BOUNDS: Size = Size {

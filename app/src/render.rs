@@ -1,4 +1,4 @@
-use asteroids::{Asteroid, Blast, Player, Point};
+use asteroids::{Asteroid, Blast, Particle, Player, Point};
 
 use wasm_bindgen::prelude::wasm_bindgen;
 
@@ -95,6 +95,14 @@ pub fn asteroids<'a>(asteroids: &Vec<Asteroid>, list: &'a mut PathList) -> &'a m
 pub fn blasts<'a>(blasts: &Vec<Blast>, list: &'a mut PathList) -> &'a mut PathList {
     for blast in blasts.iter() {
         let (a, b) = blast.endpoints();
+        list.push(&mut vec![a, b], 1.0, PathEnd::Open);
+    }
+    list
+}
+
+pub fn particles<'a>(particles: &Vec<Particle>, list: &'a mut PathList) -> &'a mut PathList {
+    for particle in particles.iter() {
+        let (a, b) = particle.endpoints();
         list.push(&mut vec![a, b], 1.0, PathEnd::Open);
     }
     list

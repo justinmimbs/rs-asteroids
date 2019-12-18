@@ -23,6 +23,14 @@ impl Point {
         Point { x, y }
     }
 
+    pub fn origin() -> Self {
+        Point { x: 0.0, y: 0.0 }
+    }
+
+    pub fn zero() -> Self {
+        Point { x: 0.0, y: 0.0 }
+    }
+
     pub fn from_polar(radius: f64, angle: Radians) -> Self {
         Point {
             x: radius * angle.cos(),
@@ -48,6 +56,13 @@ impl Point {
         Point {
             x: self.x - other.x,
             y: self.y - other.y,
+        }
+    }
+
+    pub fn translate(&self, distance: f64, angle: Radians) -> Self {
+        Point {
+            x: self.x + distance * angle.cos(),
+            y: self.y + distance * angle.sin(),
         }
     }
 
