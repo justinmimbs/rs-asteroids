@@ -10,12 +10,11 @@
 
 import init, { Particles } from './wasm/examples.js';
 import createScreen from './screen.js';
-import { addBrushListener, removeBrushListener } from './brush.js';
+import { addBrushListener } from './brush.js';
 
 let screen;
 let app;
 let time;
-let brush;
 
 async function main() {
     const wasm = await init();
@@ -34,31 +33,21 @@ function loop() {
     app.step((now - time) / 1000);
     time = now;
     screen.draw(app.render());
-    drawOverlay();
     requestAnimationFrame(loop);
 }
 
-function onBrush(nextBrush) {
-    if (nextBrush.phase === 'end') {
-        app.burst(brush.initialX, brush.initialY, -brush.extentX, -brush.extentY);
-        brush = null;
-    } else {
-        brush = nextBrush;
+function onBrush(brush) {
+    switch (brush.phase) {
+        case 'start':
+            app.ready(brush.initialX, brush.initialY);
+            break;
+        case 'move':
+            app.aim(-brush.extentX, -brush.extentY);
+            break;
+        case 'end':
+            app.fire();
+            break;
     }
-}
-
-function drawOverlay() {
-    if (!brush) {
-        return;
-    }
-    let context = document.querySelector('#canvas').getContext('2d');
-    context.save();
-    context.globalAlpha = 0.2;
-    context.beginPath();
-    context.moveTo(brush.initialX, brush.initialY);
-    context.lineTo(brush.initialX + brush.extentX, brush.initialY + brush.extentY);
-    context.stroke();
-    context.restore();
 }
 
 main();

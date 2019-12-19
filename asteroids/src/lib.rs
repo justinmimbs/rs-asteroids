@@ -3,7 +3,7 @@ use rand_pcg::Pcg32;
 
 mod asteroid;
 mod blast;
-mod geometry;
+pub mod geometry;
 mod motion;
 mod particle;
 mod player;
