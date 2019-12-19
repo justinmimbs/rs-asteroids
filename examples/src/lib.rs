@@ -52,36 +52,39 @@ impl AsteroidField {
 // 03
 
 #[wasm_bindgen]
-pub struct Particles(Vec<Particle>);
+pub struct Particles {
+    rng: Pcg32,
+    particles: Vec<Particle>,
+}
 
 #[wasm_bindgen]
 impl Particles {
     pub fn new() -> Self {
-        let mut rng = Pcg32::seed_from_u64(1979);
-        Particles(
-            Dispersion::new(
-                150.0,
-                100.0,
-                Point::new(BOUNDS.width * 0.5, BOUNDS.height * 0.5),
-                Vector::zero(),
-            )
-            .burst(&mut rng, 24),
-        )
+        Particles {
+            rng: Pcg32::seed_from_u64(1979),
+            particles: Vec::new(),
+        }
+    }
+
+    pub fn burst(&mut self, px: f64, py: f64, vx: f64, vy: f64) -> () {
+        let mut particles = Dispersion::new(150.0, 100.0, Point::new(px, py), Vector::new(vx, vy))
+            .burst(&mut self.rng, 24);
+        self.particles.append(&mut particles);
     }
 
     pub fn step(&mut self, dt: f64) -> () {
         if dt <= 0.0 {
             return ();
         }
-        for particle in self.0.iter_mut() {
+        for particle in self.particles.iter_mut() {
             particle.step(dt, &BOUNDS);
         }
-        self.0.retain(|particle| !particle.is_expired());
+        self.particles.retain(|particle| !particle.is_expired());
     }
 
     pub fn render(&self) -> PathList {
         let mut list = PathList::new();
-        render::particles(&self.0, &mut list);
+        render::particles(&self.particles, &mut list);
         list
     }
 }
