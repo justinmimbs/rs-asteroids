@@ -1,4 +1,5 @@
 use asteroids::{Asteroid, Blast, Particle, Player, Point};
+use std::f64::consts::PI;
 
 use wasm_bindgen::prelude::wasm_bindgen;
 
@@ -103,7 +104,8 @@ pub fn blasts<'a>(blasts: &Vec<Blast>, list: &'a mut PathList) -> &'a mut PathLi
 pub fn particles<'a>(particles: &Vec<Particle>, list: &'a mut PathList) -> &'a mut PathList {
     for particle in particles.iter() {
         let (a, b) = particle.endpoints();
-        list.push(&mut vec![a, b], 1.0, PathEnd::Open);
+        let alpha = 0.5 + (0.5 - (particle.rotation() / PI).rem_euclid(1.0)).abs();
+        list.push(&mut vec![a, b], alpha, PathEnd::Open);
     }
     list
 }

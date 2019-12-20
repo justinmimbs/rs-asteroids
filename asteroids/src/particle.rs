@@ -34,6 +34,10 @@ impl Particle {
             position.translate(self.radius, *rotation),
         )
     }
+
+    pub fn rotation(&self) -> Radians {
+        self.placement.rotation
+    }
 }
 
 struct Deviation {
