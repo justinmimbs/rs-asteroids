@@ -4,6 +4,7 @@ use rand_pcg::Pcg32;
 mod asteroid;
 mod blast;
 pub mod geometry;
+mod iter;
 mod motion;
 mod particle;
 mod player;
