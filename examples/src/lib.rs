@@ -71,6 +71,10 @@ impl Particles {
         }
     }
 
+    fn target_shape() -> Vec<Point> {
+        geometry::ngon(5, 12.0)
+    }
+
     pub fn ready(&mut self, position_x: f64, position_y: f64) -> () {
         self.target = Some((Point::new(position_x, position_y), Vector::zero()));
     }
@@ -83,9 +87,14 @@ impl Particles {
 
     pub fn fire(&mut self) -> () {
         if let Some((position, velocity)) = &self.target {
-            let mut particles = Dispersion::new(150.0, 100.0, position.clone(), velocity.clone())
+            let mut particles = Dispersion::new(position.clone(), velocity.clone(), 150.0, 100.0)
                 .burst(&mut self.rng, 24);
             self.particles.append(&mut particles);
+
+            let mut pieces = Dispersion::new(position.clone(), velocity.clone(), 100.0, 150.0)
+                .explode(&mut self.rng, &Particles::target_shape());
+            self.particles.append(&mut pieces);
+
             self.target = None;
         }
     }
@@ -104,7 +113,7 @@ impl Particles {
         let mut list = PathList::new();
         render::particles(&self.particles, &mut list);
         if let Some((position, velocity)) = &self.target {
-            let mut shape = geometry::ngon(5, 12.0)
+            let mut shape = Particles::target_shape()
                 .iter()
                 .map(|point| point.add(position))
                 .collect();

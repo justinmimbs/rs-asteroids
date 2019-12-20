@@ -38,65 +38,198 @@ impl Particle {
 struct Deviation {
     scale_speed: f64,
     scale_distance: f64,
-    angle: Radians,
+    direction: Radians,
     angular_velocity: Radians,
 }
 
 const BURST_DEVIATION: Deviation = Deviation {
     scale_speed: 0.9,
     scale_distance: 0.9,
-    angle: PI,
+    direction: PI,
     angular_velocity: 3.0 * PI,
 };
 
 const EXPLODE_DEVIATION: Deviation = Deviation {
     scale_speed: 0.5,
     scale_distance: 0.5,
-    angle: 0.5 * PI,
+    direction: 0.5 * PI,
     angular_velocity: PI,
 };
 
 pub struct Dispersion {
-    speed: f64,
-    distance: f64,
     position: Point,
     velocity: Vector,
+    speed: f64,
+    distance: f64,
 }
 
 impl Dispersion {
-    pub fn new(speed: f64, distance: f64, position: Point, velocity: Vector) -> Self {
+    pub fn new(position: Point, velocity: Vector, speed: f64, distance: f64) -> Self {
         Dispersion {
-            speed,
-            distance,
             position,
             velocity,
+            speed,
+            distance,
         }
     }
 
+    fn movement(&self, rng: &mut Pcg32, deviation: &Deviation, direction: f64) -> (Movement, f64) {
+        let Dispersion {
+            velocity,
+            speed,
+            distance,
+            ..
+        } = &self;
+
+        let speed = rng.gen_range(-1.0, 1.0) * deviation.scale_speed * speed + speed;
+        let distance = rng.gen_range(-1.0, 1.0) * deviation.scale_distance * distance + distance;
+        let direction = rng.gen_range(-1.0, 1.0) * deviation.direction + direction;
+        let angular_velocity = rng.gen_range(-1.0, 1.0) * deviation.angular_velocity;
+        (
+            Movement {
+                velocity: velocity.translate(speed, direction),
+                angular_velocity,
+            },
+            distance / speed,
+        )
+    }
+
     pub fn burst(&self, rng: &mut Pcg32, count: u32) -> Vec<Particle> {
-        let deviation = &BURST_DEVIATION;
         let central_angle = (2.0 * PI) / (count as f64);
         (0..count)
             .map(|i| {
-                let speed =
-                    self.speed + rng.gen_range(-1.0, 1.0) * deviation.scale_speed * self.speed;
-                let distance = self.distance
-                    + rng.gen_range(-1.0, 1.0) * deviation.scale_distance * self.distance;
-                let angle = (i as f64) * central_angle + rng.gen_range(-1.0, 1.0) * deviation.angle;
-                let angular_velocity = rng.gen_range(-1.0, 1.0) * deviation.angular_velocity;
+                let direction = (i as f64) * central_angle;
+                let (movement, duration) = self.movement(rng, &BURST_DEVIATION, direction);
                 Particle {
                     placement: Placement {
                         position: self.position.clone(),
-                        rotation: angle,
+                        rotation: direction,
                     },
-                    movement: Movement {
-                        velocity: self.velocity.translate(speed, angle),
-                        angular_velocity,
-                    },
-                    expiration: Timer::new(distance / speed),
+                    movement,
+                    expiration: Timer::new(duration),
                     radius: rng.gen_range(0.5, 2.5),
                 }
             })
             .collect()
+    }
+
+    pub fn explode(&self, rng: &mut Pcg32, polygon: &Vec<Point>) -> Vec<Particle> {
+        polygon
+            .iter()
+            .edges_cycle()
+            .map(|(a, b)| {
+                let vector = b.sub(&a);
+                let midpoint = a.midpoint(&b);
+                let (movement, duration) = self.movement(rng, &EXPLODE_DEVIATION, midpoint.angle());
+                Particle {
+                    placement: Placement {
+                        position: self.position.add(&midpoint),
+                        rotation: vector.angle(),
+                    },
+                    movement,
+                    expiration: Timer::new(duration),
+                    radius: 0.5 * vector.length(),
+                }
+            })
+            .collect()
+    }
+}
+
+// ------------------------------------------------------------------------------------------------
+// iterator adaptor: edges_cycle
+
+struct EdgesCycle<I, T> {
+    iter: I,
+    state: Option<(T, T)>,
+}
+
+impl<I, T> Iterator for EdgesCycle<I, T>
+where
+    I: Iterator<Item = T>,
+    T: Clone,
+{
+    type Item = (T, T);
+
+    fn next(&mut self) -> Option<Self::Item> {
+        if let Some(next) = self.iter.next() {
+            match &mut self.state {
+                None => {
+                    // initialize
+                    self.state = Some((next.clone(), next));
+                    self.next()
+                }
+                Some((_first, previous)) => {
+                    // continue
+                    let edge = (previous.clone(), next.clone());
+                    *previous = next;
+                    Some(edge)
+                }
+            }
+        } else {
+            match &mut self.state {
+                Some((first, last)) => {
+                    // finalize
+                    let edge = (last.clone(), first.clone());
+                    self.state = None;
+                    Some(edge)
+                }
+                None => {
+                    // empty
+                    None
+                }
+            }
+        }
+    }
+}
+
+// trait with edges_cycle method
+
+trait EdgesCycleIterator: Sized + Iterator {
+    fn edges_cycle(self) -> EdgesCycle<Self, Self::Item>;
+}
+
+// _blanket implementation_ of EdgesCycleIterator for all types implementing Iterator
+
+impl<I: Iterator> EdgesCycleIterator for I {
+    fn edges_cycle(self) -> EdgesCycle<Self, Self::Item> {
+        EdgesCycle {
+            iter: self,
+            state: None,
+        }
+    }
+}
+
+#[cfg(test)]
+mod test_edges_cycle {
+    use super::*;
+
+    #[test]
+    fn test_empty() {
+        let mut iter = (0..0).edges_cycle();
+        assert_eq!(iter.next(), None);
+    }
+
+    #[test]
+    fn test_length_1() {
+        let mut iter = (0..1).edges_cycle();
+        assert_eq!(iter.next(), Some((0, 0)));
+        assert_eq!(iter.next(), None);
+    }
+
+    #[test]
+    fn test_length_2() {
+        let mut iter = (0..2).edges_cycle();
+        assert_eq!(iter.next(), Some((0, 1)));
+        assert_eq!(iter.next(), Some((1, 0)));
+        assert_eq!(iter.next(), None);
+    }
+
+    #[test]
+    fn test_length_3() {
+        let mut iter = (0..3).edges_cycle();
+        assert_eq!(iter.next(), Some((0, 1)));
+        assert_eq!(iter.next(), Some((1, 2)));
+        assert_eq!(iter.next(), Some((2, 0)));
+        assert_eq!(iter.next(), None);
     }
 }
