@@ -1,3 +1,4 @@
+use core::f64::consts::PI;
 use rand::SeedableRng;
 use rand_pcg::Pcg32;
 use wasm_bindgen::prelude::wasm_bindgen;
@@ -6,7 +7,7 @@ use app::{
     render,
     render::{PathEnd, PathList},
 };
-use asteroids::{geometry, Asteroid, Dispersion, Particle, Point, Size, Vector};
+use asteroids::{geometry, geometry::Circle, Asteroid, Dispersion, Particle, Point, Size, Vector};
 
 const BOUNDS: Size = Size {
     width: 1200.0,
@@ -123,5 +124,55 @@ impl Particles {
             list.push(&mut line, 0.2, PathEnd::Open);
         }
         list
+    }
+}
+
+// 04
+
+#[wasm_bindgen]
+pub struct EnclosingCircle {
+    points: Vec<Point>,
+}
+
+#[wasm_bindgen]
+impl EnclosingCircle {
+    pub fn new() -> Self {
+        EnclosingCircle { points: Vec::new() }
+    }
+
+    pub fn add(&mut self, x: f64, y: f64) -> () {
+        self.points.push(Point::new(x, y));
+    }
+
+    pub fn render(&self) -> PathList {
+        let initial: Vec<&Point> = self.points.iter().rev().take(3).collect();
+        let circle = match &initial.as_slice() {
+            [a, b, c] => Circle::enclose3(a, b, c),
+            [a, b] => Circle::enclose3(a, b, b),
+            [a] => Circle::enclose3(a, a, a),
+            _ => Circle {
+                center: Point::origin(),
+                radius: 0.0,
+            },
+        };
+        let mut list = PathList::new();
+        for point in initial {
+            EnclosingCircle::render_ngon(4, 2.0, point, 1.0, &mut list);
+        }
+        EnclosingCircle::render_circle(&circle, &mut list);
+        list
+    }
+
+    fn render_ngon(n: u32, radius: f64, position: &Point, alpha: f64, list: &mut PathList) -> () {
+        let mut shape = geometry::ngon(n, radius)
+            .iter()
+            .map(|point| point.add(position))
+            .collect();
+        list.push(&mut shape, alpha, PathEnd::Closed);
+    }
+
+    fn render_circle(circle: &Circle, list: &mut PathList) -> () {
+        let n = ((circle.radius * PI / 5.0).floor() as u32).max(24);
+        EnclosingCircle::render_ngon(n, circle.radius, &circle.center, 0.5, list);
     }
 }

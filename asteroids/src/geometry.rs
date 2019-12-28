@@ -128,7 +128,7 @@ impl Matrix {
 
 // polygons
 
-pub fn ngon(n: u8, radius: f64) -> Vec<Point> {
+pub fn ngon(n: u32, radius: f64) -> Vec<Point> {
     let n = n.max(3);
     let angle = (2.0 * PI) / (n as f64);
 

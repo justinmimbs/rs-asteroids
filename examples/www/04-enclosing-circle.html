@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta charset="utf-8">
+        <title>Enclosing Circle</title>
+    </head>
+    <body>
+        <canvas id="canvas"></canvas>
+        <script type="module">
+
+import init, { EnclosingCircle } from './wasm/examples.js';
+import createScreen from './screen.js';
+
+let screen;
+let app;
+
+async function main() {
+    const wasm = await init();
+    screen = createScreen(wasm.memory, document.querySelector('#canvas'));
+    app = EnclosingCircle.new();
+
+    document.querySelector('#canvas').addEventListener('pointerdown', handlePointerDown);
+}
+
+function handlePointerDown(event) {
+    app.add(event.offsetX, event.offsetY);
+    screen.draw(app.render());
+}
+
+main();
+
+        </script>
+    </body>
+</html>
