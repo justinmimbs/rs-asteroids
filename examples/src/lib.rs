@@ -145,21 +145,11 @@ impl EnclosingCircle {
     }
 
     pub fn render(&self) -> PathList {
-        let initial: Vec<&Point> = self.points.iter().rev().take(3).collect();
-        let circle = match &initial.as_slice() {
-            [a, b, c] => Circle::enclose3(a, b, c),
-            [a, b] => Circle::enclose3(a, b, b),
-            [a] => Circle::enclose3(a, a, a),
-            _ => Circle {
-                center: Point::origin(),
-                radius: 0.0,
-            },
-        };
         let mut list = PathList::new();
-        for point in initial {
+        for point in &self.points {
             EnclosingCircle::render_ngon(4, 2.0, point, 1.0, &mut list);
         }
-        EnclosingCircle::render_circle(&circle, &mut list);
+        EnclosingCircle::render_circle(&Circle::enclose(&self.points), &mut list);
         list
     }
 

@@ -203,16 +203,16 @@ struct Circ {
 }
 
 impl Circ {
-    fn is_enclosed(&self, point: &Point) -> bool {
+    fn encloses(&self, point: &Point) -> bool {
         // `self.center.distance_squared(point) <= self.radius_squared` is the ideal comparison
         self.center.distance_squared(point) - self.radius_squared
             <= f64::EPSILON * 10.0 * self.radius_squared
     }
 
-    fn degenerate(center: Point) -> Self {
+    fn degenerate(center: &Point) -> Self {
         Circ {
             radius_squared: 0.0,
-            center,
+            center: center.clone(),
         }
     }
 
@@ -233,18 +233,18 @@ impl Circ {
 
     fn enclose3(a: &Point, b: &Point, c: &Point) -> Self {
         let ab = Circ::circumcircle2(a, b);
-        if ab.is_enclosed(c) {
+        if ab.encloses(c) {
             return ab;
         }
         let ac = Circ::circumcircle2(a, c);
-        if ac.is_enclosed(b) {
+        if ac.encloses(b) {
             return ac;
         }
         let bc = Circ::circumcircle2(b, c);
-        if bc.is_enclosed(a) {
+        if bc.encloses(a) {
             return bc;
         }
-        Circ::circumcircle3(a, b, c).unwrap_or_else(|| Circ::degenerate(a.clone()))
+        Circ::circumcircle3(a, b, c).unwrap_or_else(|| Circ::degenerate(a))
     }
 }
 
@@ -256,11 +256,38 @@ pub struct Circle {
 }
 
 impl Circle {
-    pub fn enclose3(a: &Point, b: &Point, c: &Point) -> Self {
-        let circ = Circ::enclose3(a, b, c);
+    /// Compute the smallest enclosing circle from a list of points in linear time.
+    /// Based on [Emo Welzl's algorithm](https://www.inf.ethz.ch/personal/emo/PublFiles/SmallEnclDisk_LNCS555_91.pdf).
+    /// This version assumes the list is already in a random order.
+
+    pub fn enclose(points: &Vec<Point>) -> Self {
+        let mut refs: Vec<&Point> = points.iter().collect();
+        let points = refs.as_mut_slice();
+        let circ = match points.len() {
+            0 => Circ::degenerate(&Point::origin()),
+            1 => Circ::degenerate(points[0]),
+            2 => Circ::circumcircle2(points[0], points[1]),
+            _ => Circle::enclose_help(Circ::enclose3(points[0], points[1], points[2]), points, 3),
+        };
         Circle {
             center: circ.center,
             radius: circ.radius_squared.sqrt(),
+        }
+    }
+
+    fn enclose_help(circ: Circ, points: &mut [&Point], i: usize) -> Circ {
+        if points.len() <= i {
+            circ
+        } else {
+            if circ.encloses(points[i]) {
+                Circle::enclose_help(circ, points, i + 1)
+            } else {
+                points.swap(3, i);
+                points.swap(2, 3);
+                points.swap(1, 2);
+                points.swap(0, 1);
+                Circle::enclose_help(Circ::enclose3(points[0], points[1], points[2]), points, 3)
+            }
         }
     }
 }
