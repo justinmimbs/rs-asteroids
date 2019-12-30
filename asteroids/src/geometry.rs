@@ -1,5 +1,9 @@
+use std::cmp::Ordering;
 use std::f64;
 use std::f64::consts::PI;
+use std::mem;
+
+use crate::iter::EdgesCycleIterator;
 
 pub type Radians = f64;
 
@@ -16,6 +20,29 @@ pub struct Point {
     pub x: f64,
     pub y: f64,
 }
+
+impl Ord for Point {
+    fn cmp(&self, other: &Self) -> Ordering {
+        match self.x.partial_cmp(&other.x) {
+            None | Some(Ordering::Equal) => match self.y.partial_cmp(&other.y) {
+                None => Ordering::Equal,
+                Some(ordering) => ordering,
+            },
+            Some(ordering) => ordering,
+        }
+    }
+}
+impl PartialOrd for Point {
+    fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
+        Some(self.cmp(other))
+    }
+}
+impl PartialEq for Point {
+    fn eq(&self, other: &Self) -> bool {
+        self.cmp(other) == Ordering::Equal
+    }
+}
+impl Eq for Point {}
 
 pub type Vector = Point;
 
@@ -135,6 +162,80 @@ pub fn ngon(n: u32, radius: f64) -> Vec<Point> {
     (0..n)
         .map(|i| Point::from_polar(radius, angle * (i as f64)))
         .collect()
+}
+
+pub fn split_polygon(polygon: &Vec<Point>, a: &Point, b: &Point) -> Vec<Vec<Point>> {
+    polygons_from_split_points(rotate_split_points(&mut split_points(polygon, a, b)))
+}
+
+// 1. Insert intersection points.
+
+enum SplitPoint {
+    Point(Point),
+    Intersection(Point),
+}
+
+fn split_points(polygon: &Vec<Point>, a: &Point, b: &Point) -> Vec<SplitPoint> {
+    polygon
+        .iter()
+        .edges_cycle()
+        .fold(Vec::new(), |mut points, edge| {
+            points.push(SplitPoint::Point(edge.0.clone()));
+            if let Some(intersection) = intersect(Inter::LineSegment, a, b, edge.0, edge.1) {
+                points.push(SplitPoint::Intersection(intersection));
+            }
+            points
+        })
+}
+
+// 2. Rotate split points so that intersection points are in sorted order.
+// (This is only necessary if there are more than two intersection points.)
+
+fn rotate_split_points(points: &mut Vec<SplitPoint>) -> &mut Vec<SplitPoint> {
+    let intersections: Vec<(usize, &Point)> = points
+        .iter()
+        .enumerate()
+        .filter_map(|(i, split_point)| {
+            if let SplitPoint::Intersection(point) = split_point {
+                Some((i, point))
+            } else {
+                None
+            }
+        })
+        .collect();
+    if 2 < intersections.len() {
+        let (min, _) = *intersections.iter().min_by_key(|(_, point)| point).unwrap();
+        points.rotate_left(min);
+    }
+    points
+}
+
+// 3. Construct polygons.
+
+fn polygons_from_split_points(points: &Vec<SplitPoint>) -> Vec<Vec<Point>> {
+    let mut working = Vec::new();
+    let mut waiting = Vec::new();
+    let mut completed = Vec::new();
+
+    for split_point in points.iter() {
+        match split_point {
+            SplitPoint::Point(point) => {
+                working.push(point.clone());
+            }
+            SplitPoint::Intersection(point) => {
+                working.push(point.clone());
+                waiting.push(point.clone());
+                if waiting.len() != 1 {
+                    // if waiting was not empty, then working is complete
+                    completed.push(working);
+                    working = Vec::new();
+                }
+                mem::swap(&mut working, &mut waiting);
+            }
+        }
+    }
+    completed.push(working);
+    completed
 }
 
 // lines
