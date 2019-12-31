@@ -164,6 +164,9 @@ pub fn ngon(n: u32, radius: f64) -> Vec<Point> {
         .collect()
 }
 
+/// Split a polygon by a line.
+/// Assumes polygon is neither spiral nor self-intersecting.
+
 pub fn split_polygon(polygon: &Vec<Point>, a: &Point, b: &Point) -> Vec<Vec<Point>> {
     polygons_from_split_points(rotate_split_points(&mut split_points(polygon, a, b)))
 }
@@ -204,8 +207,13 @@ fn rotate_split_points(points: &mut Vec<SplitPoint>) -> &mut Vec<SplitPoint> {
         })
         .collect();
     if 2 < intersections.len() {
-        let (min, _) = *intersections.iter().min_by_key(|(_, point)| point).unwrap();
-        points.rotate_left(min);
+        let ord = intersections[0].1.cmp(intersections[1].1);
+        let start = intersections
+            .iter()
+            .edges_cycle()
+            .find(|((_, a), (_, b))| a.cmp(b) != ord)
+            .map_or(0, |(_, (i, _))| *i);
+        points.rotate_left(start);
     }
     points
 }

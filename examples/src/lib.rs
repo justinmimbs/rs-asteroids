@@ -14,6 +14,19 @@ const BOUNDS: Size = Size {
     height: 900.0,
 };
 
+fn render_ngon(n: u32, radius: f64, position: &Point, alpha: f64, list: &mut PathList) -> () {
+    let mut shape = geometry::ngon(n, radius)
+        .iter()
+        .map(|point| point.add(position))
+        .collect();
+    list.push(&mut shape, alpha, PathEnd::Closed);
+}
+
+fn render_circle(circle: &Circle, list: &mut PathList) -> () {
+    let n = ((circle.radius * PI / 5.0).floor() as u32).max(24);
+    render_ngon(n, circle.radius, &circle.center, 0.5, list);
+}
+
 // 01
 
 #[wasm_bindgen]
@@ -147,22 +160,45 @@ impl EnclosingCircle {
     pub fn render(&self) -> PathList {
         let mut list = PathList::new();
         for point in &self.points {
-            EnclosingCircle::render_ngon(4, 2.0, point, 1.0, &mut list);
+            render_ngon(4, 2.0, point, 1.0, &mut list);
         }
-        EnclosingCircle::render_circle(&Circle::enclose(&self.points), &mut list);
+        render_circle(&Circle::enclose(&self.points), &mut list);
         list
     }
+}
 
-    fn render_ngon(n: u32, radius: f64, position: &Point, alpha: f64, list: &mut PathList) -> () {
-        let mut shape = geometry::ngon(n, radius)
-            .iter()
-            .map(|point| point.add(position))
-            .collect();
-        list.push(&mut shape, alpha, PathEnd::Closed);
+// 05
+
+#[wasm_bindgen]
+pub struct SplitPolygon {
+    polygon: Vec<Point>,
+    line: (Point, Point),
+}
+
+#[wasm_bindgen]
+impl SplitPolygon {
+    pub fn new() -> Self {
+        let center = Point::new(BOUNDS.width, BOUNDS.height).scale(0.5);
+        let mut polygon = geometry::ngon(7, 100.0);
+        polygon[0] = Point::origin();
+        SplitPolygon {
+            polygon: polygon.iter().map(|p| p.add(&center)).collect(),
+            line: (Point::origin(), Point::origin()),
+        }
     }
 
-    fn render_circle(circle: &Circle, list: &mut PathList) -> () {
-        let n = ((circle.radius * PI / 5.0).floor() as u32).max(24);
-        EnclosingCircle::render_ngon(n, circle.radius, &circle.center, 0.5, list);
+    pub fn line(&mut self, x1: f64, y1: f64, x2: f64, y2: f64) -> () {
+        self.line = (Point::new(x1, y1), Point::new(x2, y2));
+    }
+
+    pub fn render(&self) -> PathList {
+        let mut list = PathList::new();
+        let (a, b) = &self.line;
+        list.push(&mut vec![a.clone(), b.clone()], 0.5, PathEnd::Open);
+        for mut polygon in geometry::split_polygon(&self.polygon, a, b) {
+            render_circle(&Circle::enclose(&polygon), &mut list);
+            list.push(&mut polygon, 1.0, PathEnd::Closed);
+        }
+        list
     }
 }

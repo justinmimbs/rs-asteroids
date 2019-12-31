@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta charset="utf-8">
+        <title>SplitPolygon</title>
+    </head>
+    <body>
+        <canvas id="canvas"></canvas>
+        <script type="module">
+
+import init, { SplitPolygon } from './wasm/examples.js';
+import createScreen from './screen.js';
+import { addBrushListener } from './brush.js';
+
+let screen;
+let app;
+
+async function main() {
+    const wasm = await init();
+    screen = createScreen(wasm.memory, document.querySelector('#canvas'));
+    app = SplitPolygon.new();
+
+    screen.draw(app.render());
+
+    addBrushListener(document.querySelector('#canvas'), onBrush);
+}
+
+function onBrush(brush) {
+    if (brush.phase == 'move') {
+        app.line(brush.initialX, brush.initialY, brush.initialX + brush.extentX, brush.initialY + brush.extentY);
+        screen.draw(app.render());
+    }
+}
+
+main();
+
+        </script>
+    </body>
+</html>
