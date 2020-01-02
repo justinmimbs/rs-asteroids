@@ -5,7 +5,7 @@ mod asteroid;
 mod blast;
 pub mod geometry;
 mod iter;
-mod motion;
+pub mod motion;
 mod particle;
 mod player;
 mod util;

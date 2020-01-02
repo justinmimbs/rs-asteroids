@@ -1,4 +1,4 @@
-use std::f64::consts::PI;
+use std::f64::consts::FRAC_PI_2;
 
 use crate::blast::Blast;
 use crate::geometry;
@@ -132,7 +132,7 @@ impl Player {
             + rotation_thrust;
 
         let position_thrust = if controls.thrust() {
-            Vector::from_polar(THRUST_SPEED * dt, rotation - PI / 2.0)
+            Vector::from_polar(THRUST_SPEED * dt, rotation - FRAC_PI_2)
         } else {
             Vector::new(0.0, 0.0)
         };
@@ -166,7 +166,7 @@ impl Player {
         match &self.aux {
             Aux::Firing { timer } if timer.is_elapsed() => {
                 let speed = self.movement.velocity.length() + BLAST_SPEED;
-                let angle = self.placement.rotation - PI / 2.0;
+                let angle = self.placement.rotation - FRAC_PI_2;
                 Some(Blast::new(self.placement.position.clone(), speed, angle))
             }
             _ => None,

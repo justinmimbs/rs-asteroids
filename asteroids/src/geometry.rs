@@ -66,6 +66,26 @@ impl Point {
         }
     }
 
+    pub fn length(&self) -> f64 {
+        (self.x.powi(2) + self.y.powi(2)).sqrt()
+    }
+
+    pub fn angle(&self) -> Radians {
+        self.y.atan2(self.x)
+    }
+
+    pub fn normalize(&self) -> Self {
+        let length = self.length();
+        if length == 0.0 {
+            Vector::zero()
+        } else {
+            Vector {
+                x: self.x / length,
+                y: self.y / length,
+            }
+        }
+    }
+
     pub fn scale(&self, factor: f64) -> Self {
         Point {
             x: self.x * factor,
@@ -87,21 +107,6 @@ impl Point {
         }
     }
 
-    pub fn midpoint(&self, other: &Point) -> Self {
-        Point {
-            x: (self.x + other.x) * 0.5,
-            y: (self.y + other.y) * 0.5,
-        }
-    }
-
-    pub fn distance_squared(&self, other: &Point) -> f64 {
-        (other.x - self.x).powi(2) + (other.y - self.y).powi(2)
-    }
-
-    pub fn distance(&self, other: &Point) -> f64 {
-        self.distance_squared(other).sqrt()
-    }
-
     pub fn translate(&self, distance: f64, angle: Radians) -> Self {
         Point {
             x: self.x + distance * angle.cos(),
@@ -118,12 +123,31 @@ impl Point {
         }
     }
 
-    pub fn length(&self) -> f64 {
-        (self.x.powi(2) + self.y.powi(2)).sqrt()
+    pub fn midpoint(&self, other: &Point) -> Self {
+        Point {
+            x: (self.x + other.x) * 0.5,
+            y: (self.y + other.y) * 0.5,
+        }
     }
 
-    pub fn angle(&self) -> Radians {
-        self.y.atan2(self.x)
+    pub fn distance_squared(&self, other: &Point) -> f64 {
+        (other.x - self.x).powi(2) + (other.y - self.y).powi(2)
+    }
+
+    pub fn distance(&self, other: &Point) -> f64 {
+        self.distance_squared(other).sqrt()
+    }
+
+    pub fn direction(&self, other: &Point) -> Self {
+        other.sub(self).normalize()
+    }
+
+    pub fn dot(&self, other: &Point) -> f64 {
+        self.x * other.x + self.y * other.y
+    }
+
+    pub fn cross(&self, other: &Point) -> f64 {
+        self.x * other.y - self.y * other.x
     }
 }
 
@@ -256,7 +280,7 @@ enum Inter {
     SegmentSegment,
 }
 
-fn intersect(inter: Inter, a: &Point, b: &Point, c: &Point, d: &Point) -> Option<(Point)> {
+fn intersect(inter: Inter, a: &Point, b: &Point, c: &Point, d: &Point) -> Option<Point> {
     let rx = b.x - a.x;
     let ry = b.y - a.y;
     let sx = d.x - c.x;

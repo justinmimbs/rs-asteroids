@@ -1,3 +1,5 @@
+use std::f64::consts::FRAC_PI_2;
+
 use crate::geometry::{Matrix, Point, Radians, Size, Vector};
 
 impl Point {
@@ -14,14 +16,34 @@ impl Point {
     }
 }
 
-pub struct Placement {
-    pub position: Point,
-    pub rotation: Radians,
-}
-
 pub struct Movement {
     pub velocity: Vector,
     pub angular_velocity: Radians,
+}
+
+impl Movement {
+    pub fn from_impulse(center: &Point, contact: &Point, velocity: &Vector) -> Self {
+        let direction = contact.direction(center);
+        let speed = velocity.length();
+        let angle = angle_from(&velocity.normalize(), &direction);
+        let angular_speed = angle.signum() * (speed / contact.distance(center));
+        let t = angle.abs() / FRAC_PI_2; // rotation alpha, within range [0, 2]
+        Movement {
+            velocity: direction.scale(speed * (1.0 - t)),
+            angular_velocity: angular_speed * (if 1.0 < t { 2.0 - t } else { t }),
+        }
+    }
+}
+
+/// Returns directed angle within range [-PI, PI]; assumes unit vectors.
+
+fn angle_from(a: &Vector, b: &Vector) -> f64 {
+    a.cross(b).atan2(a.dot(b))
+}
+
+pub struct Placement {
+    pub position: Point,
+    pub rotation: Radians,
 }
 
 impl Placement {
