@@ -33,6 +33,13 @@ impl Movement {
             angular_velocity: angular_speed * (if 1.0 < t { 2.0 - t } else { t }),
         }
     }
+
+    pub fn add(&self, other: &Movement) -> Self {
+        Movement {
+            velocity: self.velocity.add(&other.velocity),
+            angular_velocity: self.angular_velocity + other.angular_velocity,
+        }
+    }
 }
 
 /// Returns directed angle within range [-PI, PI]; assumes unit vectors.

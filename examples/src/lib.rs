@@ -7,7 +7,12 @@ use app::{
     render,
     render::{PathEnd, PathList},
 };
-use asteroids::{geometry, geometry::Circle, Asteroid, Dispersion, Particle, Point, Size, Vector};
+use asteroids::{
+    geometry,
+    geometry::Circle,
+    motion::{Movement, Placement},
+    Asteroid, Dispersion, Particle, Point, Size, Vector,
+};
 
 const BOUNDS: Size = Size {
     width: 1200.0,
@@ -94,8 +99,8 @@ impl Particles {
     }
 
     pub fn aim(&mut self, velocity_x: f64, velocity_y: f64) -> () {
-        if let Some(position_velocity) = &mut self.target {
-            position_velocity.1 = Vector::new(velocity_x, velocity_y);
+        if let Some((_, velocity)) = &mut self.target {
+            *velocity = Vector::new(velocity_x, velocity_y);
         }
     }
 
@@ -198,6 +203,72 @@ impl SplitPolygon {
         for mut polygon in geometry::split_polygon(&self.polygon, a, b) {
             render_circle(&Circle::enclose(&polygon), &mut list);
             list.push(&mut polygon, 1.0, PathEnd::Closed);
+        }
+        list
+    }
+}
+
+// 06
+
+#[wasm_bindgen]
+pub struct Impulse {
+    pending: Option<(Point, Vector)>,
+    polygon: Vec<Point>,
+    placement: Placement,
+    movement: Movement,
+}
+
+#[wasm_bindgen]
+impl Impulse {
+    pub fn new() -> Self {
+        Impulse {
+            pending: None,
+            polygon: geometry::ngon(7, 60.0),
+            placement: Placement {
+                position: Point::new(BOUNDS.width, BOUNDS.height).scale(0.5),
+                rotation: 0.0,
+            },
+            movement: Movement {
+                velocity: Vector::zero(),
+                angular_velocity: 0.0,
+            },
+        }
+    }
+
+    pub fn ready(&mut self, contact_x: f64, contact_y: f64) -> () {
+        self.pending = Some((Point::new(contact_x, contact_y), Vector::zero()));
+    }
+
+    pub fn aim(&mut self, velocity_x: f64, velocity_y: f64) -> () {
+        if let Some((_, velocity)) = &mut self.pending {
+            *velocity = Vector::new(velocity_x, velocity_y);
+        }
+    }
+
+    pub fn fire(&mut self) -> () {
+        if let Some((contact, velocity)) = &self.pending {
+            let impulse = Movement::from_impulse(&self.placement.position, contact, velocity);
+            self.movement = self.movement.add(&impulse);
+            self.pending = None;
+        }
+    }
+
+    pub fn step(&mut self, dt: f64) -> () {
+        if dt <= 0.0 {
+            return ();
+        }
+        self.placement
+            .apply_movement(&self.movement, dt)
+            .wrap_position(&BOUNDS);
+    }
+
+    pub fn render(&self) -> PathList {
+        let mut list = PathList::new();
+        let mut shape = self.placement.transform_path(&self.polygon);
+        list.push(&mut shape, 1.0, PathEnd::Closed);
+        if let Some((contact, velocity)) = &self.pending {
+            let mut line = vec![contact.clone(), contact.sub(velocity)];
+            list.push(&mut line, 0.2, PathEnd::Open);
         }
         list
     }

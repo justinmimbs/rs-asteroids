@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta charset="utf-8">
+        <title>Impulse</title>
+    </head>
+    <body>
+        <canvas id="canvas"></canvas>
+        <script type="module">
+
+import init, { Impulse } from './wasm/examples.js';
+import createScreen from './screen.js';
+import { addBrushListener } from './brush.js';
+
+let screen;
+let app;
+let time;
+
+async function main() {
+    const wasm = await init();
+    screen = createScreen(wasm.memory, document.querySelector('#canvas'));
+    app = Impulse.new();
+    time = Date.now();
+
+    screen.draw(app.render());
+    requestAnimationFrame(loop);
+
+    addBrushListener(document.querySelector('#canvas'), onBrush);
+}
+
+function loop() {
+    const now = Date.now();
+    app.step((now - time) / 1000);
+    time = now;
+    screen.draw(app.render());
+    requestAnimationFrame(loop);
+}
+
+function onBrush(brush) {
+    switch (brush.phase) {
+        case 'start':
+            app.ready(brush.initialX, brush.initialY);
+            break;
+        case 'move':
+            app.aim(-brush.extentX, -brush.extentY);
+            break;
+        case 'end':
+            app.fire();
+            break;
+    }
+}
+
+main();
+
+        </script>
+    </body>
+</html>
