@@ -188,11 +188,15 @@ pub fn ngon(n: u32, radius: f64) -> Vec<Point> {
         .collect()
 }
 
-/// Split a polygon by a line.
-/// Assumes polygon is neither spiral nor self-intersecting.
+pub struct Polygon<'a>(pub &'a Vec<Point>);
 
-pub fn split_polygon(polygon: &Vec<Point>, a: &Point, b: &Point) -> Vec<Vec<Point>> {
-    polygons_from_split_points(rotate_split_points(&mut split_points(polygon, a, b)))
+impl Polygon<'_> {
+    /// Split a polygon by a line.
+    /// Assumes polygon is neither spiral nor self-intersecting.
+
+    pub fn split(&self, a: &Point, b: &Point) -> Vec<Vec<Point>> {
+        polygons_from_split_points(rotate_split_points(&mut split_points(self.0, a, b)))
+    }
 }
 
 // 1. Insert intersection points.

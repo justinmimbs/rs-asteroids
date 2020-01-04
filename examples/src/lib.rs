@@ -9,7 +9,7 @@ use app::{
 };
 use asteroids::{
     geometry,
-    geometry::Circle,
+    geometry::{Circle, Polygon},
     motion::{Movement, Placement},
     Asteroid, Dispersion, Particle, Point, Size, Vector,
 };
@@ -200,7 +200,7 @@ impl SplitPolygon {
         let mut list = PathList::new();
         let (a, b) = &self.line;
         list.push(&mut vec![a.clone(), b.clone()], 0.5, PathEnd::Open);
-        for mut polygon in geometry::split_polygon(&self.polygon, a, b) {
+        for mut polygon in Polygon(&self.polygon).split(a, b) {
             render_circle(&Circle::enclose(&polygon), &mut list);
             list.push(&mut polygon, 1.0, PathEnd::Closed);
         }
