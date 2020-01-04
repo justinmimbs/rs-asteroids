@@ -15,12 +15,11 @@ pub struct Particle {
 }
 
 impl Particle {
-    pub fn step(&mut self, dt: f64, bounds: &Size) -> &mut Self {
+    pub fn step(&mut self, dt: f64, bounds: &Size) -> () {
         self.placement
             .apply_movement(&self.movement, dt)
             .wrap_position(bounds);
         self.expiration.step(dt);
-        self
     }
 
     pub fn is_expired(&self) -> bool {

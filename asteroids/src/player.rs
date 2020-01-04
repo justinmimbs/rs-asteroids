@@ -120,7 +120,7 @@ impl Player {
         }
     }
 
-    pub fn step(&mut self, dt: f64, bounds: &Size, controls: Controls) -> &mut Self {
+    pub fn step(&mut self, dt: f64, bounds: &Size, controls: Controls) -> () {
         let rotation_thrust = match (controls.left(), controls.right()) {
             (true, false) => -TURNING_SPEED * dt,
             (false, true) => TURNING_SPEED * dt,
@@ -159,7 +159,6 @@ impl Player {
         } else {
             Aux::Off
         };
-        self
     }
 
     pub fn fire_blast(&self) -> Option<Blast> {

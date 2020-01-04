@@ -233,8 +233,8 @@ fn rotate_split_points(points: &mut Vec<SplitPoint>) -> &mut Vec<SplitPoint> {
     if 2 < intersections.len() {
         let mut pairs = intersections.iter().edges_cycle();
         let ord = pairs.next().map(|(a, b)| a.1.cmp(b.1)).unwrap();
-        let start = (pairs.find(|(a, b)| a.1.cmp(b.1) != ord).unwrap().1).0;
-        points.rotate_left(start);
+        let first = (pairs.find(|(a, b)| a.1.cmp(b.1) != ord).unwrap().1).0;
+        points.rotate_left(first);
     }
     points
 }

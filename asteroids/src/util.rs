@@ -6,13 +6,12 @@ impl Timer {
         Timer(interval.max(0.0))
     }
 
-    pub fn step(&mut self, dt: f64) -> &mut Self {
+    pub fn step(&mut self, dt: f64) -> () {
         if dt < self.0 {
             self.0 -= dt;
         } else if self.0 < dt {
             self.0 = 0.0;
         }
-        self
     }
 
     pub fn is_elapsed(&self) -> bool {

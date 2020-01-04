@@ -18,13 +18,12 @@ impl Blast {
         }
     }
 
-    pub fn step(&mut self, dt: f64, bounds: &Size) -> &mut Self {
+    pub fn step(&mut self, dt: f64, bounds: &Size) -> () {
         self.position
             .apply_velocity(&self.velocity, dt)
             .wrap(bounds);
         self.expiration.step(dt);
         self.dt = dt;
-        self
     }
 
     pub fn is_expired(&self) -> bool {
