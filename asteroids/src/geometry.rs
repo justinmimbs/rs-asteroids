@@ -70,6 +70,8 @@ impl Point {
         (self.x.powi(2) + self.y.powi(2)).sqrt()
     }
 
+    /// Returns directed angle, within range [-PI, PI].
+
     pub fn angle(&self) -> Radians {
         self.y.atan2(self.x)
     }
@@ -138,16 +140,33 @@ impl Point {
         self.distance_squared(other).sqrt()
     }
 
-    pub fn direction(&self, other: &Point) -> Self {
-        other.sub(self).normalize()
-    }
-
     pub fn dot(&self, other: &Point) -> f64 {
         self.x * other.x + self.y * other.y
     }
 
     pub fn cross(&self, other: &Point) -> f64 {
         self.x * other.y - self.y * other.x
+    }
+
+    /// Returns unit vector in the direction from self to other.
+
+    pub fn direction_to(&self, other: &Point) -> Self {
+        other.sub(self).normalize()
+    }
+
+    /// Returns directed angle from self to other, within range [-PI, PI].
+
+    pub fn angle_to(&self, other: &Vector) -> f64 {
+        let a = self.normalize();
+        let b = other.normalize();
+        a.cross(&b).atan2(a.dot(&b))
+    }
+
+    /// Returns undirected angle between self and other, within range [0, PI].
+    /// Equivalent to `self.angle_to(other).abs()`.
+
+    pub fn angle_between(&self, other: &Vector) -> f64 {
+        self.normalize().dot(&other.normalize()).acos()
     }
 }
 

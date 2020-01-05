@@ -23,9 +23,9 @@ pub struct Movement {
 
 impl Movement {
     pub fn from_impulse(center: &Point, contact: &Point, velocity: &Vector) -> Self {
-        let direction = contact.direction(center);
+        let direction = contact.direction_to(center);
         let speed = velocity.length();
-        let angle = angle_from(&velocity.normalize(), &direction);
+        let angle = velocity.angle_to(&direction);
         let angular_speed = angle.signum() * (speed / contact.distance(center));
         let t = angle.abs() / FRAC_PI_2; // rotation alpha, within range [0, 2]
         Movement {
@@ -40,12 +40,6 @@ impl Movement {
             angular_velocity: self.angular_velocity + other.angular_velocity,
         }
     }
-}
-
-/// Returns directed angle within range [-PI, PI]; assumes unit vectors.
-
-fn angle_from(a: &Vector, b: &Vector) -> f64 {
-    a.cross(b).atan2(a.dot(b))
 }
 
 pub struct Placement {
