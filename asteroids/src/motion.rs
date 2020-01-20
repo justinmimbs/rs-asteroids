@@ -1,6 +1,7 @@
 use std::f64::consts::FRAC_PI_2;
 
-use crate::geometry::{Matrix, Point, Radians, Size, Vector};
+use crate::geometry::{Matrix, Point, Polygon, Radians, Size, Vector};
+use crate::iter::EdgesCycleIterator;
 
 impl Point {
     pub fn apply_velocity(&mut self, velocity: &Vector, dt: f64) -> &mut Self {
@@ -22,6 +23,13 @@ pub struct Movement {
 }
 
 impl Movement {
+    pub fn zero() -> Self {
+        Movement {
+            velocity: Vector::zero(),
+            angular_velocity: 0.0,
+        }
+    }
+
     pub fn from_impulse(center: &Point, contact: &Point, velocity: &Vector) -> Self {
         let direction = contact.direction_to(center);
         let speed = velocity.length();
@@ -38,6 +46,13 @@ impl Movement {
         Movement {
             velocity: self.velocity.add(&other.velocity),
             angular_velocity: self.angular_velocity + other.angular_velocity,
+        }
+    }
+
+    pub fn interpolate(&self, other: &Movement, t: f64) -> Self {
+        Movement {
+            velocity: self.velocity.interpolate(&other.velocity, t),
+            angular_velocity: interpolate(self.angular_velocity, other.angular_velocity, t),
         }
     }
 }
@@ -65,4 +80,106 @@ impl Placement {
             .map(|point| point.transform(&matrix))
             .collect()
     }
+}
+
+// Collide
+
+pub trait Collide {
+    fn center(&self) -> &Point;
+    fn radius(&self) -> f64;
+    fn boundary(&self) -> Vec<Point>;
+    fn movement(&self) -> &Movement;
+    fn mass(&self) -> f64;
+}
+
+pub fn collide<T, U>(a: &T, b: &U, elasticity: f64) -> Option<(Point, Movement, Movement)>
+where
+    T: Collide,
+    U: Collide,
+{
+    collision_point(a, b).map(|point| collide_at_point(&point, a, b, elasticity))
+}
+
+fn collision_point<T, U>(a: &T, b: &U) -> Option<Point>
+where
+    T: Collide,
+    U: Collide,
+{
+    // do circles overlap?
+    if a.center().distance(b.center()) < a.radius() + b.radius() {
+        // do polygons overlap?
+        if let Some(point) =
+            Point::mean(&Polygon(&a.boundary()).intersections(b.boundary().iter().edges_cycle()))
+        {
+            // are movements colliding?
+            let is_collision = {
+                let a_speed = a.movement().velocity.length();
+                let b_speed = b.movement().velocity.length();
+                let a_is_facing =
+                    a.movement().velocity.angle_between(&b.center().sub(&point)) < FRAC_PI_2;
+                let b_is_facing =
+                    b.movement().velocity.angle_between(&a.center().sub(&point)) < FRAC_PI_2;
+
+                a_is_facing && b_is_facing
+                    || a_is_facing && b_speed < a_speed
+                    || b_is_facing && a_speed < b_speed
+            };
+
+            if is_collision {
+                return Some(point);
+            }
+        }
+    }
+    None
+}
+
+fn collide_at_point<T, U>(
+    point: &Point,
+    a: &T,
+    b: &U,
+    elasticity: f64,
+) -> (Point, Movement, Movement)
+where
+    T: Collide,
+    U: Collide,
+{
+    let inelastic_movement =
+        (a.movement()).interpolate(b.movement(), b.mass() / (a.mass() + b.mass()));
+
+    (
+        point.clone(),
+        inelastic_movement.interpolate(&collision_movement(point, a, b), elasticity),
+        inelastic_movement.interpolate(&collision_movement(point, b, a), elasticity),
+    )
+}
+
+fn collision_movement<T, U>(point: &Point, a: &T, b: &U) -> Movement
+where
+    T: Collide,
+    U: Collide,
+{
+    let reflection = (a.movement().velocity).reflect(&b.center().direction_to(a.center()));
+    let contact_velocity = b.movement().velocity.add(&tangential_velocity(
+        &point.sub(b.center()),
+        b.movement().angular_velocity,
+    ));
+    let impact = Movement::from_impulse(a.center(), point, &contact_velocity);
+    let t = b.mass() / (a.mass() + b.mass());
+    Movement {
+        velocity: (a.movement().velocity)
+            .interpolate(&reflection, t)
+            .add(&impact.velocity.scale(2.0 * t)),
+        angular_velocity: interpolate(a.movement().angular_velocity, impact.angular_velocity, t),
+    }
+}
+
+fn tangential_velocity(radial: &Vector, angular_velocity: Radians) -> Vector {
+    Vector::from_polar(
+        radial.length() * angular_velocity,
+        radial.angle() + FRAC_PI_2,
+    )
+}
+
+fn interpolate(a: f64, b: f64, t: f64) -> f64 {
+    (a * (1.0 - t)) + (b * t)
 }

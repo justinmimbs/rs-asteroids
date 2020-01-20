@@ -148,6 +148,10 @@ impl Point {
         self.x * other.y - self.y * other.x
     }
 
+    pub fn interpolate(&self, other: &Point, t: f64) -> Self {
+        self.scale(1.0 - t).add(&other.scale(t))
+    }
+
     /// Returns unit vector in the direction from self to other.
 
     pub fn direction_to(&self, other: &Point) -> Self {
@@ -167,6 +171,25 @@ impl Point {
 
     pub fn angle_between(&self, other: &Vector) -> f64 {
         self.normalize().dot(&other.normalize()).acos()
+    }
+
+    pub fn reflect(&self, normal: &Vector) -> Self {
+        self.sub(&normal.scale(2.0 * self.dot(normal)))
+    }
+
+    pub fn mean(points: &Vec<Point>) -> Option<Point> {
+        match points.len() {
+            0 => None,
+            n => {
+                let factor = 1.0 / n as f64;
+                let mut result = Point::zero();
+                for point in points {
+                    result.x += point.x * factor;
+                    result.y += point.y * factor;
+                }
+                Some(result)
+            }
+        }
     }
 }
 
@@ -213,8 +236,23 @@ impl Polygon<'_> {
     /// Split a polygon by a line.
     /// Assumes polygon is neither spiral nor self-intersecting.
 
-    pub fn split(&self, a: &Point, b: &Point) -> Vec<Vec<Point>> {
+    pub fn split(self, a: &Point, b: &Point) -> Vec<Vec<Point>> {
         polygons_from_split_points(rotate_split_points(&mut split_points(self.0, a, b)))
+    }
+
+    pub fn intersections<'a, T>(self, segments: T) -> Vec<Point>
+    where
+        T: IntoIterator<Item = (&'a Point, &'a Point)>,
+    {
+        segments
+            .into_iter()
+            .flat_map(|a| {
+                (self.0)
+                    .iter()
+                    .edges_cycle()
+                    .filter_map(move |b| intersect(Inter::SegmentSegment, a.0, a.1, b.0, b.1))
+            })
+            .collect()
     }
 }
 
