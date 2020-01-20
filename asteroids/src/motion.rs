@@ -74,7 +74,7 @@ impl Placement {
         self
     }
 
-    pub fn transform_path(&self, points: &Vec<Point>) -> Vec<Point> {
+    pub fn transform_points(&self, points: &Vec<Point>) -> Vec<Point> {
         let matrix = Matrix::new(&self.position, self.rotation, 1.0);
         (points.iter())
             .map(|point| point.transform(&matrix))

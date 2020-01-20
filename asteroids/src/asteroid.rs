@@ -74,6 +74,6 @@ impl Asteroid {
     }
 
     pub fn to_path(&self) -> Vec<Point> {
-        self.placement.transform_path(&self.polygon)
+        self.placement.transform_points(&self.polygon)
     }
 }

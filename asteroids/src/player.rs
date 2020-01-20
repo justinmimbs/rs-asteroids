@@ -105,16 +105,16 @@ impl Player {
     }
 
     pub fn hull(&self) -> Vec<Point> {
-        self.placement.transform_path(&self.spaceship.hull)
+        self.placement.transform_points(&self.spaceship.hull)
     }
 
     pub fn interior(&self) -> Vec<Point> {
-        self.placement.transform_path(&self.spaceship.interior)
+        self.placement.transform_points(&self.spaceship.interior)
     }
 
     pub fn shield(&self) -> Option<Vec<Point>> {
         if let Aux::Shielding = self.aux {
-            Some(self.placement.transform_path(&self.spaceship.shield))
+            Some(self.placement.transform_points(&self.spaceship.shield))
         } else {
             None
         }
