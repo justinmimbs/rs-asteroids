@@ -9,8 +9,9 @@ use app::{
 };
 use asteroids::{
     geometry,
-    geometry::{Circle, Polygon},
-    motion::{Movement, Placement},
+    geometry::{Circle, Polygon, Radians},
+    motion,
+    motion::{Collide, Movement, Placement},
     Asteroid, Dispersion, Particle, Point, Size, Vector,
 };
 
@@ -264,12 +265,100 @@ impl Impulse {
 
     pub fn render(&self) -> PathList {
         let mut list = PathList::new();
-        let mut shape = self.placement.transform_path(&self.polygon);
+        let mut shape = self.placement.transform_points(&self.polygon);
         list.push(&mut shape, 1.0, PathEnd::Closed);
         if let Some((contact, velocity)) = &self.pending {
             let mut line = vec![contact.clone(), contact.sub(velocity)];
             list.push(&mut line, 0.2, PathEnd::Open);
         }
         list
+    }
+}
+
+// 07
+
+#[wasm_bindgen]
+pub struct Colliding {
+    pair: (Disk, Disk),
+}
+
+#[wasm_bindgen]
+impl Colliding {
+    pub fn new() -> Self {
+        let pair = (
+            Disk::new(
+                Point::new(300.0, 100.0),
+                Vector::new(300.0, 300.0),
+                PI / 3.0,
+            ),
+            Disk::new(Point::new(600.0, 400.0), Vector::zero(), 0.0),
+        );
+        Colliding { pair }
+    }
+    pub fn step(&mut self, dt: f64) -> () {
+        if dt <= 0.0 {
+            return ();
+        }
+        self.pair.0.step(dt);
+        self.pair.1.step(dt);
+        if let Some((_, a, b)) = motion::collide(&self.pair.0, &self.pair.1, 0.9) {
+            (self.pair.0).movement = a;
+            (self.pair.1).movement = b;
+        }
+    }
+
+    pub fn render(&self) -> PathList {
+        let mut list = PathList::new();
+        list.push(&mut (self.pair.0).boundary(), 1.0, PathEnd::Closed);
+        list.push(&mut (self.pair.1).boundary(), 1.0, PathEnd::Closed);
+        list
+    }
+}
+
+struct Disk {
+    placement: Placement,
+    movement: Movement,
+    radius: f64,
+}
+
+impl Disk {
+    fn new(position: Point, velocity: Vector, angular_velocity: Radians) -> Self {
+        Disk {
+            placement: Placement {
+                position,
+                rotation: 0.0,
+            },
+            movement: Movement {
+                velocity,
+                angular_velocity,
+            },
+            radius: 50.0,
+        }
+    }
+    fn step(&mut self, dt: f64) -> () {
+        self.placement
+            .apply_movement(&self.movement, dt)
+            .wrap_position(&BOUNDS);
+    }
+}
+
+impl Collide for Disk {
+    fn center(&self) -> &Point {
+        &self.placement.position
+    }
+    fn radius(&self) -> f64 {
+        self.radius
+    }
+    fn boundary(&self) -> Vec<Point> {
+        geometry::ngon(12, self.radius)
+            .iter()
+            .map(|point| point.add(&self.placement.position))
+            .collect()
+    }
+    fn movement(&self) -> &Movement {
+        &self.movement
+    }
+    fn mass(&self) -> f64 {
+        self.radius * self.radius
     }
 }

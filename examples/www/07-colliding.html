@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta charset="utf-8">
+        <title>Colliding</title>
+    </head>
+    <body>
+        <canvas id="canvas"></canvas>
+        <script type="module">
+
+import init, { Colliding } from './wasm/examples.js';
+import createScreen from './screen.js';
+
+let screen;
+let app;
+let time;
+
+async function main() {
+    const wasm = await init();
+    screen = createScreen(wasm.memory, document.querySelector('#canvas'));
+    app = Colliding.new();
+    time = Date.now();
+
+    screen.draw(app.render());
+    requestAnimationFrame(loop);
+}
+
+function loop() {
+    const now = Date.now();
+    app.step((now - time) / 1000);
+    time = now;
+    screen.draw(app.render());
+    requestAnimationFrame(loop);
+}
+
+main();
+
+        </script>
+    </body>
+</html>
