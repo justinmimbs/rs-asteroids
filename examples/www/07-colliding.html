@@ -23,6 +23,12 @@ async function main() {
 
     screen.draw(app.render());
     requestAnimationFrame(loop);
+
+    document.querySelector('#canvas').addEventListener('pointerdown', handlePointerDown);
+}
+
+function handlePointerDown() {
+    app.next();
 }
 
 function loop() {

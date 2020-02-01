@@ -279,22 +279,24 @@ impl Impulse {
 
 #[wasm_bindgen]
 pub struct Colliding {
+    n: usize,
     pair: (Disk, Disk),
 }
 
 #[wasm_bindgen]
 impl Colliding {
     pub fn new() -> Self {
-        let pair = (
-            Disk::new(
-                Point::new(300.0, 100.0),
-                Vector::new(300.0, 300.0),
-                PI / 3.0,
-            ),
-            Disk::new(Point::new(600.0, 400.0), Vector::zero(), 0.0),
-        );
-        Colliding { pair }
+        Colliding {
+            n: 0,
+            pair: get_pair(0),
+        }
     }
+
+    pub fn next(&mut self) -> () {
+        self.n = (self.n + 1) % (SPEC_PAIRS.len() * RADIUS_PAIRS.len());
+        self.pair = get_pair(self.n);
+    }
+
     pub fn step(&mut self, dt: f64) -> () {
         if dt <= 0.0 {
             return ();
@@ -315,14 +317,70 @@ impl Colliding {
     }
 }
 
+fn get_pair(n: usize) -> (Disk, Disk) {
+    let i = n % SPEC_PAIRS.len();
+    let j = (n / SPEC_PAIRS.len()) % RADIUS_PAIRS.len();
+    let (spec1, spec2) = SPEC_PAIRS[i];
+    let (radius1, radius2) = RADIUS_PAIRS[j];
+
+    (to_disk(spec1, radius1), to_disk(spec2, radius2))
+}
+
+type DiskSpec = ((f64, f64), (f64, f64), f64);
+
+fn to_disk(spec: DiskSpec, radius: f64) -> Disk {
+    let (x, y) = spec.0;
+    let (vx, vy) = spec.1;
+    let av = spec.2;
+    Disk::new(Point::new(x, y), Vector::new(vx, vy), av, radius)
+}
+
+const SPEC_PAIRS: [(DiskSpec, DiskSpec); 8] = [
+    (
+        ((300.0, 100.0), (300.0, 300.0), PI / 3.0),
+        ((600.0, 400.0), (0.0, 0.0), 0.0),
+    ),
+    (
+        ((100.0, 100.0), (300.0, 300.0), (PI / 3.0)),
+        ((300.0, 300.0), (200.0, 200.0), 0.0),
+    ),
+    (
+        ((300.0, 100.0), (300.0, 330.0), 0.0),
+        ((600.0, 400.0), (0.0, 0.0), 0.0),
+    ),
+    (
+        ((300.0, 100.0), (300.0, 430.0), (PI / 3.0)),
+        ((600.0, 400.0), (0.0, 0.0), 0.0),
+    ),
+    (
+        ((300.0, 100.0), (300.0, 300.0), (PI / 3.0)),
+        ((400.0, 600.0), (200.0, -200.0), 0.0),
+    ),
+    (
+        ((300.0, 100.0), (350.0, 50.0), (PI / 8.0)),
+        ((900.0, 100.0), (-150.0, 70.0), (PI / -2.0)),
+    ),
+    (
+        ((300.0, 100.0), (250.0, 100.0), (PI / 3.0)),
+        ((900.0, 100.0), (-250.0, 100.0), (PI / -3.0)),
+    ),
+    (
+        ((300.0, 100.0), (350.0, 270.0), (PI / -5.0)),
+        ((900.0, 700.0), (-150.0, -150.0), (PI / 2.0)),
+    ),
+];
+
+const RADIUS_PAIRS: [(f64, f64); 3] = [(50.0, 50.0), (50.0, 30.0), (30.0, 50.0)];
+
 struct Disk {
     placement: Placement,
     movement: Movement,
     radius: f64,
+    polygon: Vec<Point>,
 }
 
 impl Disk {
-    fn new(position: Point, velocity: Vector, angular_velocity: Radians) -> Self {
+    fn new(position: Point, velocity: Vector, angular_velocity: Radians, radius: f64) -> Self {
         Disk {
             placement: Placement {
                 position,
@@ -332,7 +390,8 @@ impl Disk {
                 velocity,
                 angular_velocity,
             },
-            radius: 50.0,
+            polygon: geometry::ngon(12, radius),
+            radius,
         }
     }
     fn step(&mut self, dt: f64) -> () {
@@ -350,10 +409,7 @@ impl Collide for Disk {
         self.radius
     }
     fn boundary(&self) -> Vec<Point> {
-        geometry::ngon(12, self.radius)
-            .iter()
-            .map(|point| point.add(&self.placement.position))
-            .collect()
+        self.placement.transform_points(&self.polygon)
     }
     fn movement(&self) -> &Movement {
         &self.movement
