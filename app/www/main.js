@@ -89,17 +89,12 @@ function keyToControl(key) {
     }
 }
 
-let i = 0
-
 function loop() {
     const now = Date.now();
     app.step((now - time) / 1000, bitpackControls());
     time = now;
     draw();
-    i += 1;
-    if (i < 300) {
-        requestAnimationFrame(loop);
-    }
+    requestAnimationFrame(loop);
 }
 
 function draw() {

@@ -1,4 +1,5 @@
-use asteroids::{Asteroid, Blast, Particle, Player, Point};
+use asteroids::geometry::Point;
+use asteroids::{Asteroid, Blast, Particle, Player};
 use std::f64::consts::PI;
 
 use wasm_bindgen::prelude::wasm_bindgen;

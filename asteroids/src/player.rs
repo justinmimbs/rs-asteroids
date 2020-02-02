@@ -57,7 +57,7 @@ impl Controls {
 }
 
 struct Spaceship {
-    radius: f64,
+    // radius: f64,
     hull: Vec<Point>,
     interior: Vec<Point>,
     shield: Vec<Point>,
@@ -67,7 +67,7 @@ impl Spaceship {
     fn new(radius: f64) -> Self {
         let factor = radius / 22.0;
         Spaceship {
-            radius,
+            // radius,
             hull: HULL.iter().map(|point| point.scale(factor)).collect(),
             interior: INTERIOR.iter().map(|point| point.scale(factor)).collect(),
             shield: geometry::ngon(16, radius + 1.0),

@@ -6,12 +6,12 @@ pub mod render;
 use render::PathList;
 
 #[wasm_bindgen]
-pub struct App(asteroids::App);
+pub struct App(asteroids::Game);
 
 #[wasm_bindgen]
 impl App {
     pub fn new() -> Self {
-        App(asteroids::App::new())
+        App(asteroids::Game::new())
     }
 
     pub fn step(&mut self, dt: f64, input: u32) -> () {

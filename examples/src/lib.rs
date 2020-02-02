@@ -9,10 +9,10 @@ use app::{
 };
 use asteroids::{
     geometry,
-    geometry::{Circle, Polygon, Radians},
+    geometry::{Circle, Point, Polygon, Radians, Size, Vector},
     motion,
     motion::{Collide, Movement, Placement},
-    Asteroid, Dispersion, Particle, Point, Size, Vector,
+    Asteroid, Dispersion, Particle,
 };
 
 const BOUNDS: Size = Size {
