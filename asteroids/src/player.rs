@@ -7,21 +7,21 @@ use crate::motion::{Movement, Placement};
 use crate::util::Timer;
 
 const HULL: [Point; 7] = [
-    Point { x: -10.0, y: 19.0 },
-    Point { x: -18.0, y: 9.0 },
-    Point { x: -6.0, y: 3.0 },
-    Point { x: 0.0, y: -21.0 },
-    Point { x: 6.0, y: 3.0 },
-    Point { x: 18.0, y: 9.0 },
-    Point { x: 10.0, y: 19.0 },
+    Point { x: -19.0, y: -10.0 },
+    Point { x: -9.0, y: -18.0 },
+    Point { x: -3.0, y: -6.0 },
+    Point { x: 21.0, y: 0.0 },
+    Point { x: -3.0, y: 6.0 },
+    Point { x: -9.0, y: 18.0 },
+    Point { x: -19.0, y: 10.0 },
 ];
 
 const INTERIOR: [Point; 5] = [
-    Point { x: -10.0, y: 19.0 },
-    Point { x: -6.0, y: 3.0 },
+    Point { x: -19.0, y: -10.0 },
+    Point { x: -3.0, y: -6.0 },
     Point { x: 0.0, y: 0.0 },
-    Point { x: 6.0, y: 3.0 },
-    Point { x: 10.0, y: 19.0 },
+    Point { x: -3.0, y: 6.0 },
+    Point { x: -19.0, y: 10.0 },
 ];
 
 const TURNING_SPEED: f64 = 1.4; // radians / second
@@ -57,7 +57,7 @@ impl Controls {
 }
 
 struct Spaceship {
-    // radius: f64,
+    radius: f64,
     hull: Vec<Point>,
     interior: Vec<Point>,
     shield: Vec<Point>,
@@ -67,7 +67,7 @@ impl Spaceship {
     fn new(radius: f64) -> Self {
         let factor = radius / 22.0;
         Spaceship {
-            // radius,
+            radius,
             hull: HULL.iter().map(|point| point.scale(factor)).collect(),
             interior: INTERIOR.iter().map(|point| point.scale(factor)).collect(),
             shield: geometry::ngon(16, radius + 1.0),
@@ -93,7 +93,7 @@ impl Player {
         Player {
             placement: Placement {
                 position,
-                rotation: 0.0,
+                rotation: -FRAC_PI_2,
             },
             movement: Movement {
                 velocity: Point::new(0.0, 0.0),
@@ -132,7 +132,7 @@ impl Player {
             + rotation_thrust;
 
         let position_thrust = if controls.thrust() {
-            Vector::from_polar(THRUST_SPEED * dt, rotation - FRAC_PI_2)
+            Vector::from_polar(THRUST_SPEED * dt, rotation)
         } else {
             Vector::new(0.0, 0.0)
         };
@@ -165,8 +165,10 @@ impl Player {
         match &self.aux {
             Aux::Firing { timer } if timer.is_elapsed() => {
                 let speed = self.movement.velocity.length() + BLAST_SPEED;
-                let angle = self.placement.rotation - FRAC_PI_2;
-                Some(Blast::new(self.placement.position.clone(), speed, angle))
+                let angle = self.placement.rotation;
+                let position = (self.placement.position)
+                    .add(&Vector::from_polar(self.spaceship.radius, angle));
+                Some(Blast::new(position, speed, angle))
             }
             _ => None,
         }
