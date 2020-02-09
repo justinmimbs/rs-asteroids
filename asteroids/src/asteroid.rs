@@ -6,6 +6,7 @@ use crate::geometry::{Point, Size};
 use crate::motion::{Movement, Placement};
 
 pub struct Asteroid {
+    radius: f64,
     placement: Placement,
     movement: Movement,
     polygon: Vec<Point>,
@@ -15,6 +16,7 @@ impl Asteroid {
     pub fn new(rng: &mut Pcg32) -> Self {
         let radius: f64 = rng.gen_range(25.0, 55.0);
         Asteroid {
+            radius,
             placement: Placement {
                 position: Point::new(0.0, 0.0),
                 rotation: 0.0,
@@ -56,12 +58,21 @@ impl Asteroid {
         list
     }
 
-    pub fn field(rng: &mut Pcg32, bounds: &Size, count: u32) -> Vec<Asteroid> {
+    pub fn field(rng: &mut Pcg32, bounds: &Size, count: u32, clearing: f64) -> Vec<Asteroid> {
+        let center = bounds.center();
         let mut list = Vec::with_capacity(count as usize);
         for _ in 0..count {
             let mut asteroid = Asteroid::new(rng);
-            asteroid.placement.position.x = rng.gen_range(0.0, bounds.width);
-            asteroid.placement.position.y = rng.gen_range(0.0, bounds.height);
+            loop {
+                asteroid.placement.position.x = rng.gen_range(0.0, bounds.width);
+                asteroid.placement.position.y = rng.gen_range(0.0, bounds.height);
+
+                if clearing == 0.0
+                    || clearing + asteroid.radius < center.distance(&asteroid.placement.position)
+                {
+                    break;
+                }
+            }
             list.push(asteroid);
         }
         list

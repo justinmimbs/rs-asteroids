@@ -53,7 +53,7 @@ pub struct AsteroidField(Vec<Asteroid>);
 impl AsteroidField {
     pub fn new(count: u32) -> Self {
         let mut rng = Pcg32::seed_from_u64(1979);
-        AsteroidField(Asteroid::field(&mut rng, &BOUNDS, count))
+        AsteroidField(Asteroid::field(&mut rng, &BOUNDS, count, 0.0))
     }
 
     pub fn step(&mut self, dt: f64) -> () {

@@ -12,7 +12,7 @@ mod util;
 
 pub use asteroid::Asteroid;
 pub use blast::Blast;
-use geometry::{Point, Size};
+use geometry::Size;
 pub use particle::{Dispersion, Particle};
 pub use player::{Controls, Player};
 
@@ -32,8 +32,8 @@ impl Game {
     pub fn new() -> Self {
         let mut rng = Pcg32::seed_from_u64(1979);
         Game {
-            player: Player::new(Point::new(BOUNDS.width / 2.0, BOUNDS.height / 2.0)),
-            asteroids: Asteroid::field(&mut rng, &BOUNDS, 24),
+            player: Player::new(BOUNDS.center()),
+            asteroids: Asteroid::field(&mut rng, &BOUNDS, 24, 100.0),
             blasts: Vec::new(),
             // rng,
         }

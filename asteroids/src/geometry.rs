@@ -12,6 +12,15 @@ pub struct Size {
     pub height: f64,
 }
 
+impl Size {
+    pub fn center(&self) -> Point {
+        Point {
+            x: self.width / 2.0,
+            y: self.height / 2.0,
+        }
+    }
+}
+
 // Point/Vector
 
 #[repr(C)]
