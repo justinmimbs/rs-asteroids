@@ -23,9 +23,9 @@ impl App {
 
     pub fn render(&self) -> PathList {
         let mut list = PathList::new();
-        render::player(&self.0.player, &mut list);
-        render::asteroids(&self.0.asteroids, &mut list);
-        render::blasts(&self.0.blasts, &mut list);
+        render::player(self.0.player(), &mut list);
+        render::asteroids(self.0.asteroids(), &mut list);
+        render::blasts(self.0.blasts(), &mut list);
         list
     }
 }
