@@ -2,8 +2,8 @@ use rand::Rng;
 use rand_pcg::Pcg32;
 use std::f64::consts::PI;
 
-use crate::geometry::{Point, Size};
-use crate::motion::{Movement, Placement};
+use crate::geometry::{Circle, Point, Size};
+use crate::motion::{Collide, Movement, Placement};
 
 pub struct Asteroid {
     radius: f64,
@@ -32,7 +32,7 @@ impl Asteroid {
         }
     }
 
-    pub fn shape(rng: &mut Pcg32, radius: f64) -> Vec<Point> {
+    fn shape(rng: &mut Pcg32, radius: f64) -> Vec<Point> {
         let n: u32 = rng.gen_range((radius / 5.0).floor() as u32, (radius / 4.0).ceil() as u32);
         let angle = (2.0 * PI) / (n as f64);
         (0..n)
@@ -43,6 +43,28 @@ impl Asteroid {
                 )
             })
             .collect()
+    }
+
+    pub fn from_polygon(polygon: &Vec<Point>) -> Self {
+        let Circle { center, radius } = Circle::enclose(polygon);
+        let polygon = polygon.iter().map(|point| point.sub(&center)).collect();
+        Asteroid {
+            radius,
+            placement: Placement {
+                position: center,
+                rotation: 0.0,
+            },
+            movement: Movement::zero(),
+            polygon,
+        }
+    }
+
+    pub fn movement(&self) -> &Movement {
+        &self.movement
+    }
+
+    pub fn set_movement(&mut self, movement: Movement) -> () {
+        self.movement = movement;
     }
 
     pub fn grid(rng: &mut Pcg32, cols: u32, rows: u32) -> Vec<Asteroid> {
@@ -86,5 +108,23 @@ impl Asteroid {
 
     pub fn to_path(&self) -> Vec<Point> {
         self.placement.transform_points(&self.polygon)
+    }
+}
+
+impl Collide for Asteroid {
+    fn center(&self) -> &Point {
+        &self.placement.position
+    }
+    fn radius(&self) -> f64 {
+        self.radius
+    }
+    fn boundary(&self) -> Vec<Point> {
+        self.to_path()
+    }
+    fn movement(&self) -> &Movement {
+        &self.movement
+    }
+    fn mass(&self) -> f64 {
+        self.radius.powi(2)
     }
 }

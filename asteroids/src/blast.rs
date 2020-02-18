@@ -36,4 +36,8 @@ impl Blast {
             self.position.sub(&self.velocity.scale(self.dt)),
         )
     }
+
+    pub fn velocity(&self) -> &Vector {
+        &self.velocity
+    }
 }
