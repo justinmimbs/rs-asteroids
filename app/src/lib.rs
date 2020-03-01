@@ -26,6 +26,7 @@ impl App {
         render::player(self.0.player(), &mut list);
         render::asteroids(self.0.asteroids(), &mut list);
         render::blasts(self.0.blasts(), &mut list);
+        render::particles(self.0.particles(), &mut list);
         list
     }
 }

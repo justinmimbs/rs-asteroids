@@ -6,6 +6,7 @@ use crate::asteroid::Asteroid;
 use crate::blast::Blast;
 use crate::geometry::{Polygon, Size};
 use crate::motion::{Collide, Movement};
+use crate::particle::{Dispersion, Particle};
 use crate::player::{Controls, Player};
 
 const BOUNDS: Size = Size {
@@ -14,10 +15,11 @@ const BOUNDS: Size = Size {
 };
 
 pub struct Level {
-    // rng: Pcg32,
+    rng: Pcg32,
     pub player: Player,
     pub asteroids: Vec<Asteroid>,
     pub blasts: Vec<Blast>,
+    pub particles: Vec<Particle>,
 }
 
 impl Level {
@@ -28,7 +30,8 @@ impl Level {
             player: Player::new(BOUNDS.center()),
             asteroids: Asteroid::field(&mut rng, &BOUNDS, count, 100.0),
             blasts: Vec::new(),
-            // rng,
+            particles: Vec::new(),
+            rng,
         }
     }
 
@@ -51,13 +54,21 @@ impl Level {
         }
         self.blasts.retain(|blast| !blast.is_expired());
 
+        for particle in self.particles.iter_mut() {
+            particle.step(dt, &BOUNDS);
+        }
+        self.particles.retain(|particle| !particle.is_expired());
+
         // interact: asteroids * blasts
 
         let mut asteroids = Vec::new();
         for asteroid in self.asteroids.drain(..) {
-            if let Some((i, mut fragments)) = interact_asteroid_blasts(&asteroid, &self.blasts) {
+            if let Some((i, mut impacted)) =
+                interact_asteroid_blasts(&mut self.rng, &asteroid, &self.blasts)
+            {
                 self.blasts.remove(i);
-                asteroids.append(&mut fragments);
+                asteroids.append(&mut impacted.fragments);
+                self.particles.append(&mut impacted.particles);
             } else {
                 asteroids.push(asteroid);
             }
@@ -67,18 +78,28 @@ impl Level {
 }
 
 fn interact_asteroid_blasts(
+    rng: &mut Pcg32,
     asteroid: &Asteroid,
     blasts: &Vec<Blast>,
-) -> Option<(usize, Vec<Asteroid>)> {
+) -> Option<(usize, ImpactedAsteroid)> {
     for (i, blast) in blasts.iter().enumerate() {
-        if let Some(fragments) = interact_asteroid_blast(asteroid, blast) {
-            return Some((i, fragments));
+        if let Some(impacted) = interact_asteroid_blast(rng, asteroid, blast) {
+            return Some((i, impacted));
         }
     }
     None
 }
 
-fn interact_asteroid_blast(asteroid: &Asteroid, blast: &Blast) -> Option<Vec<Asteroid>> {
+struct ImpactedAsteroid {
+    fragments: Vec<Asteroid>,
+    particles: Vec<Particle>,
+}
+
+fn interact_asteroid_blast(
+    rng: &mut Pcg32,
+    asteroid: &Asteroid,
+    blast: &Blast,
+) -> Option<ImpactedAsteroid> {
     let (head, tail) = blast.endpoints();
     if head.distance_squared(asteroid.center()) < asteroid.radius().powi(2) {
         let asteroid_boundary = asteroid.boundary();
@@ -111,7 +132,19 @@ fn interact_asteroid_blast(asteroid: &Asteroid, blast: &Blast) -> Option<Vec<Ast
                     fragment
                 })
                 .collect();
-            Some(fragments)
+
+            let particles = Dispersion::new(
+                impact_point,
+                asteroid.movement().velocity.clone(),
+                100.0,
+                50.0,
+            )
+            .burst(rng, (asteroid.radius() / 4.0).ceil() as u32);
+
+            Some(ImpactedAsteroid {
+                fragments,
+                particles,
+            })
         } else {
             None
         }

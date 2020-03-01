@@ -42,4 +42,7 @@ impl Game {
     pub fn blasts(&self) -> &Vec<Blast> {
         &self.level.blasts
     }
+    pub fn particles(&self) -> &Vec<Particle> {
+        &self.level.particles
+    }
 }
