@@ -5,7 +5,7 @@ authors = ["Justin Mimbs <justin.mimbs@gmail.com>"]
 edition = "2018"
 
 [dependencies]
-wasm-bindgen = "0.2.55"
+wasm-bindgen = "0.2.58"
 asteroids = { path = "../asteroids" }
 
 [lib]
