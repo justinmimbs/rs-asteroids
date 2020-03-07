@@ -114,9 +114,18 @@ fn interact_asteroid_blast(
         };
         if let Some(impact_point) = maybe_impact_point {
             let impact_speed = blast.velocity().length() * (100.0 / (100.0 + asteroid.mass()));
-            let fragments = (Polygon(&asteroid_boundary).split(&head, &tail).iter())
-                .map(|fragment_boundary| {
-                    let mut fragment = Asteroid::from_polygon(fragment_boundary);
+            let mut fragments = Vec::new();
+            let mut particles = Dispersion::new(
+                impact_point.clone(),
+                asteroid.movement().velocity.clone(),
+                100.0,
+                50.0,
+            )
+            .burst(rng, (asteroid.radius() / 4.0).ceil() as u32);
+
+            for fragment_boundary in Polygon(&asteroid_boundary).split(&head, &tail).iter() {
+                let mut fragment = Asteroid::from_polygon(fragment_boundary);
+                fragment.set_movement({
                     let impact_velocity = blast.velocity().normalize().scale(impact_speed);
                     let impact_movement =
                         Movement::from_impulse(fragment.center(), &impact_point, &impact_velocity);
@@ -125,21 +134,31 @@ fn interact_asteroid_blast(
                             .scale(impact_speed),
                         angular_velocity: 0.0,
                     };
-                    let movement = outward_movement
+                    outward_movement
                         .interpolate(asteroid.movement(), fragment.mass() / asteroid.mass())
-                        .add(&impact_movement);
-                    fragment.set_movement(movement);
-                    fragment
-                })
-                .collect();
+                        .add(&impact_movement)
+                });
 
-            let particles = Dispersion::new(
-                impact_point,
-                asteroid.movement().velocity.clone(),
-                100.0,
-                50.0,
-            )
-            .burst(rng, (asteroid.radius() / 4.0).ceil() as u32);
+                if fragment.radius() < 18.0 {
+                    let mut fragment_pieces = {
+                        let fragment_center = fragment.center().clone();
+                        let fragment_shape = fragment_boundary
+                            .iter()
+                            .map(|point| point.sub(&fragment_center))
+                            .collect();
+                        Dispersion::new(
+                            fragment_center,
+                            fragment.movement().velocity.clone(),
+                            impact_speed,
+                            impact_speed,
+                        )
+                        .explode(rng, &fragment_shape)
+                    };
+                    particles.append(&mut fragment_pieces);
+                } else {
+                    fragments.push(fragment);
+                }
+            }
 
             Some(ImpactedAsteroid {
                 fragments,
