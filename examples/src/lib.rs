@@ -10,6 +10,7 @@ use app::{
 use asteroids::{
     geometry,
     geometry::{Circle, Point, Polygon, Radians, Size, Vector},
+    iter::EdgesCycleIterator,
     motion,
     motion::{Collide, Movement, Placement},
     Asteroid, Dispersion, Particle,
@@ -112,7 +113,10 @@ impl Particles {
             self.particles.append(&mut particles);
 
             let mut pieces = Dispersion::new(position.clone(), velocity.clone(), 100.0, 150.0)
-                .explode(&mut self.rng, &Particles::target_shape());
+                .explode(
+                    &mut self.rng,
+                    Particles::target_shape().iter().edges_cycle(),
+                );
             self.particles.append(&mut pieces);
 
             self.target = None;

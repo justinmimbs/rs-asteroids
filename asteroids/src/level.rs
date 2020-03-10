@@ -5,6 +5,7 @@ use std::iter;
 use crate::asteroid::Asteroid;
 use crate::blast::Blast;
 use crate::geometry::{Polygon, Size};
+use crate::iter::EdgesCycleIterator;
 use crate::motion::{Collide, Movement};
 use crate::particle::{Dispersion, Particle};
 use crate::player::{Controls, Player};
@@ -140,21 +141,19 @@ fn interact_asteroid_blast(
                 });
 
                 if fragment.radius() < 18.0 {
-                    let mut fragment_pieces = {
-                        let fragment_center = fragment.center().clone();
-                        let fragment_shape = fragment_boundary
-                            .iter()
-                            .map(|point| point.sub(&fragment_center))
-                            .collect();
-                        Dispersion::new(
-                            fragment_center,
-                            fragment.movement().velocity.clone(),
-                            impact_speed,
-                            impact_speed,
-                        )
-                        .explode(rng, &fragment_shape)
-                    };
-                    particles.append(&mut fragment_pieces);
+                    let mut fragment_particles = Dispersion::new(
+                        fragment.center().clone(),
+                        fragment.movement().velocity.clone(),
+                        impact_speed,
+                        impact_speed,
+                    )
+                    .explode(
+                        rng,
+                        (fragment.boundary().iter())
+                            .map(|point| point.sub(fragment.center()))
+                            .edges_cycle(),
+                    );
+                    particles.append(&mut fragment_particles);
                 } else {
                     fragments.push(fragment);
                 }

@@ -1,9 +1,9 @@
 use rand::Rng;
 use rand_pcg::Pcg32;
+use std::borrow::Borrow;
 use std::f64::consts::PI;
 
 use crate::geometry::{Point, Radians, Size, Vector};
-use crate::iter::EdgesCycleIterator;
 use crate::motion::{Movement, Placement};
 use crate::util::Timer;
 
@@ -117,13 +117,16 @@ impl Dispersion {
             .collect()
     }
 
-    pub fn explode(&self, rng: &mut Pcg32, polygon: &Vec<Point>) -> Vec<Particle> {
-        polygon
-            .iter()
-            .edges_cycle()
+    pub fn explode<T, P>(&self, rng: &mut Pcg32, edges: T) -> Vec<Particle>
+    where
+        T: IntoIterator<Item = (P, P)>,
+        P: Borrow<Point>,
+    {
+        edges
+            .into_iter()
             .map(|(a, b)| {
-                let vector = b.sub(&a);
-                let midpoint = a.midpoint(&b);
+                let vector = b.borrow().sub(a.borrow());
+                let midpoint = a.borrow().midpoint(b.borrow());
                 let (movement, duration) = self.movement(rng, &EXPLODE_DEVIATION, midpoint.angle());
                 Particle {
                     placement: Placement {

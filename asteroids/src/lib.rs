@@ -1,7 +1,7 @@
 mod asteroid;
 mod blast;
 pub mod geometry;
-mod iter;
+pub mod iter;
 mod level;
 pub mod motion;
 mod particle;
