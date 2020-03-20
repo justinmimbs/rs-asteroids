@@ -1,4 +1,7 @@
-use crate::geometry::{Point, Size, Vector};
+use std::iter;
+
+use crate::geometry::{Point, Polygon, Size, Vector};
+use crate::motion::Collide;
 use crate::util::Timer;
 
 pub struct Blast {
@@ -6,6 +9,11 @@ pub struct Blast {
     velocity: Vector,
     expiration: Timer,
     dt: f64,
+}
+
+pub struct Impact {
+    pub point: Point,
+    pub speed: f64,
 }
 
 impl Blast {
@@ -39,5 +47,33 @@ impl Blast {
 
     pub fn velocity(&self) -> &Vector {
         &self.velocity
+    }
+
+    pub fn impact<T>(&self, object: &T) -> Option<Impact>
+    where
+        T: Collide,
+    {
+        let (head, tail) = self.endpoints();
+        if head.distance_squared(object.center()) < object.radius().powi(2) {
+            let maybe_impact_point = {
+                let intersections =
+                    Polygon(&object.boundary()).intersections(iter::once((&head, &tail)));
+                if head < tail {
+                    intersections.into_iter().min()
+                } else {
+                    intersections.into_iter().max()
+                }
+            };
+            if let Some(impact_point) = maybe_impact_point {
+                Some(Impact {
+                    point: impact_point,
+                    speed: self.velocity.length() * (100.0 / (100.0 + object.mass())),
+                })
+            } else {
+                None
+            }
+        } else {
+            None
+        }
     }
 }
