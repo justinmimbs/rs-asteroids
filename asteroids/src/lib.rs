@@ -33,7 +33,7 @@ impl Game {
         self.level.step(dt, controls);
     }
 
-    pub fn player(&self) -> &Player {
+    pub fn player(&self) -> &Option<Player> {
         &self.level.player
     }
     pub fn asteroids(&self) -> &Vec<Asteroid> {

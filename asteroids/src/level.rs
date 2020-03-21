@@ -16,7 +16,7 @@ const BOUNDS: Size = Size {
 
 pub struct Level {
     rng: Pcg32,
-    pub player: Player,
+    pub player: Option<Player>,
     pub asteroids: Vec<Asteroid>,
     pub blasts: Vec<Blast>,
     pub particles: Vec<Particle>,
@@ -27,7 +27,7 @@ impl Level {
         let mut rng = Pcg32::seed_from_u64(1979 * 11 * n as u64);
         let count = 3 + 2 * n as u32;
         Level {
-            player: Player::new(BOUNDS.center()),
+            player: Some(Player::new(BOUNDS.center())),
             asteroids: Asteroid::field(&mut rng, &BOUNDS, count, 100.0),
             blasts: Vec::new(),
             particles: Vec::new(),
@@ -42,13 +42,15 @@ impl Level {
 
         // step
 
-        self.player.step(dt, &BOUNDS, controls);
+        if let Some(player) = &mut self.player {
+            player.step(dt, &BOUNDS, controls);
+            self.blasts.extend(player.fire_blast());
+        }
 
         for asteroid in self.asteroids.iter_mut() {
             asteroid.step(dt, &BOUNDS);
         }
 
-        self.blasts.extend(self.player.fire_blast());
         for blast in self.blasts.iter_mut() {
             blast.step(dt, &BOUNDS);
         }
