@@ -80,7 +80,6 @@ impl Point {
     }
 
     /// Returns directed angle, within range [-PI, PI].
-
     pub fn angle(&self) -> Radians {
         self.y.atan2(self.x)
     }
@@ -162,13 +161,11 @@ impl Point {
     }
 
     /// Returns unit vector in the direction from self to other.
-
     pub fn direction_to(&self, other: &Point) -> Self {
         other.sub(self).normalize()
     }
 
     /// Returns directed angle from self to other, within range [-PI, PI].
-
     pub fn angle_to(&self, other: &Vector) -> f64 {
         let a = self.normalize();
         let b = other.normalize();
@@ -177,7 +174,6 @@ impl Point {
 
     /// Returns undirected angle between self and other, within range [0, PI].
     /// Equivalent to `self.angle_to(other).abs()`.
-
     pub fn angle_between(&self, other: &Vector) -> f64 {
         self.normalize().dot(&other.normalize()).acos()
     }
@@ -244,7 +240,6 @@ pub struct Polygon<'a>(pub &'a Vec<Point>);
 impl Polygon<'_> {
     /// Split a polygon by a line.
     /// Assumes polygon is neither spiral nor self-intersecting.
-
     pub fn split(self, a: &Point, b: &Point) -> Vec<Vec<Point>> {
         polygons_from_split_points(rotate_split_points(&mut split_points(self.0, a, b)))
     }
@@ -459,7 +454,6 @@ impl Circle {
     /// Compute the smallest enclosing circle from a list of points in linear time.
     /// Based on [Emo Welzl's algorithm](https://www.inf.ethz.ch/personal/emo/PublFiles/SmallEnclDisk_LNCS555_91.pdf).
     /// This version assumes the list is already in a random order.
-
     pub fn enclose(points: &Vec<Point>) -> Self {
         let mut refs: Vec<&Point> = points.iter().collect();
         let points = refs.as_mut_slice();

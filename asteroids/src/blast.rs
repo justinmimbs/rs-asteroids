@@ -4,6 +4,8 @@ use crate::geometry::{Point, Polygon, Size, Vector};
 use crate::motion::Collide;
 use crate::util::Timer;
 
+const BLAST_MASS: f64 = 100.0;
+
 pub struct Blast {
     position: Point,
     velocity: Vector,
@@ -67,7 +69,7 @@ impl Blast {
             if let Some(impact_point) = maybe_impact_point {
                 Some(Impact {
                     point: impact_point,
-                    speed: self.velocity.length() * (100.0 / (100.0 + object.mass())),
+                    speed: self.velocity.length() * (BLAST_MASS / (BLAST_MASS + object.mass())),
                 })
             } else {
                 None
