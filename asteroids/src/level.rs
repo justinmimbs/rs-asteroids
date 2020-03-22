@@ -7,6 +7,7 @@ use crate::geometry::{Polygon, Size};
 use crate::iter::EdgesCycleIterator;
 use crate::motion::{Collide, Movement};
 use crate::particle::{Dispersion, Particle};
+use crate::player;
 use crate::player::{Controls, Player};
 
 const BOUNDS: Size = Size {
@@ -76,6 +77,20 @@ impl Level {
             }
         }
         self.asteroids = asteroids;
+
+        // interact: player * blasts
+
+        if let Some(player) = &mut self.player {
+            if let Some((i, mut impact)) =
+                interact_player_blasts(&mut self.rng, player, &self.blasts)
+            {
+                self.blasts.remove(i);
+                self.particles.append(&mut impact.particles);
+                if impact.destroyed {
+                    self.player = None;
+                }
+            }
+        }
     }
 }
 
@@ -155,4 +170,17 @@ fn interact_asteroid_blast(
     } else {
         None
     }
+}
+
+fn interact_player_blasts(
+    rng: &mut Pcg32,
+    player: &mut Player,
+    blasts: &Vec<Blast>,
+) -> Option<(usize, player::Impact)> {
+    for (i, blast) in blasts.iter().enumerate() {
+        if let Some(impact) = player.interact_blast(rng, blast) {
+            return Some((i, impact));
+        }
+    }
+    None
 }

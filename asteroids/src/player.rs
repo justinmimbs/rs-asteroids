@@ -1,9 +1,11 @@
+use rand_pcg::Pcg32;
 use std::f64::consts::FRAC_PI_2;
 
 use crate::blast::Blast;
 use crate::geometry;
 use crate::geometry::{Point, Size, Vector};
-use crate::motion::{Movement, Placement};
+use crate::motion::{Collide, Movement, Placement};
+use crate::particle::Particle;
 use crate::util::Timer;
 
 const HULL: [Point; 7] = [
@@ -23,6 +25,8 @@ const INTERIOR: [Point; 5] = [
     Point { x: -3.0, y: 6.0 },
     Point { x: -19.0, y: 10.0 },
 ];
+
+const SPACESHIP_MASS: f64 = 300.0;
 
 const TURNING_SPEED: f64 = 1.4; // radians / second
 const THRUST_SPEED: f64 = 35.0; // px / second
@@ -78,7 +82,12 @@ impl Spaceship {
 enum Aux {
     Off,
     Firing { timer: Timer },
-    Shielding,
+    Shielding { delay: Timer },
+}
+
+pub struct Impact {
+    pub destroyed: bool,
+    pub particles: Vec<Particle>,
 }
 
 pub struct Player {
@@ -112,8 +121,15 @@ impl Player {
         self.placement.transform_points(&self.spaceship.interior)
     }
 
+    fn is_shielding(&self) -> bool {
+        match &self.aux {
+            Aux::Shielding { delay } if delay.is_elapsed() => true,
+            _ => false,
+        }
+    }
+
     pub fn shield(&self) -> Option<Vec<Point>> {
-        if let Aux::Shielding = self.aux {
+        if self.is_shielding() {
             Some(self.placement.transform_points(&self.spaceship.shield))
         } else {
             None
@@ -147,7 +163,13 @@ impl Player {
         self.placement.rotation = rotation;
         self.placement.wrap_position(bounds);
         self.aux = if controls.shield() {
-            Aux::Shielding
+            let mut delay = if let Aux::Shielding { delay } = &self.aux {
+                delay.clone()
+            } else {
+                Timer::new(0.0)
+            };
+            delay.step(dt);
+            Aux::Shielding { delay }
         } else if controls.fire() {
             let mut timer = match &self.aux {
                 Aux::Firing { timer } if timer.is_elapsed() => Timer::new(FIRING_DELAY),
@@ -172,5 +194,45 @@ impl Player {
             }
             _ => None,
         }
+    }
+
+    pub fn interact_blast(&mut self, _rng: &mut Pcg32, blast: &Blast) -> Option<Impact> {
+        if let Some(_impact) = blast.impact(self) {
+            if self.is_shielding() {
+                Some(Impact {
+                    destroyed: false,
+                    particles: Vec::new(),
+                })
+            } else {
+                Some(Impact {
+                    destroyed: true,
+                    particles: Vec::new(),
+                })
+            }
+        } else {
+            None
+        }
+    }
+}
+
+impl Collide for Player {
+    fn center(&self) -> &Point {
+        &self.placement.position
+    }
+    fn radius(&self) -> f64 {
+        self.spaceship.radius
+    }
+    fn boundary(&self) -> Vec<Point> {
+        if let Some(shield) = self.shield() {
+            shield
+        } else {
+            self.hull()
+        }
+    }
+    fn movement(&self) -> &Movement {
+        &self.movement
+    }
+    fn mass(&self) -> f64 {
+        SPACESHIP_MASS
     }
 }
