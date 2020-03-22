@@ -4,8 +4,9 @@ use std::f64::consts::FRAC_PI_2;
 use crate::blast::Blast;
 use crate::geometry;
 use crate::geometry::{Point, Size, Vector};
+use crate::iter::{EdgesCycleIterator, EdgesIterator};
 use crate::motion::{Collide, Movement, Placement};
-use crate::particle::Particle;
+use crate::particle::{Dispersion, Particle};
 use crate::util::Timer;
 
 const HULL: [Point; 7] = [
@@ -196,17 +197,50 @@ impl Player {
         }
     }
 
-    pub fn interact_blast(&mut self, _rng: &mut Pcg32, blast: &Blast) -> Option<Impact> {
-        if let Some(_impact) = blast.impact(self) {
+    pub fn interact_blast(&mut self, rng: &mut Pcg32, blast: &Blast) -> Option<Impact> {
+        if let Some(impact) = blast.impact(self) {
+            self.movement = self.movement.add(&Movement::from_impulse(
+                &self.placement.position,
+                &impact.point,
+                &blast.velocity().normalize().scale(impact.speed),
+            ));
+
             if self.is_shielding() {
+                self.aux = Aux::Shielding {
+                    delay: Timer::new(impact.speed * 0.002),
+                };
                 Some(Impact {
                     destroyed: false,
-                    particles: Vec::new(),
+                    particles: Dispersion::new(
+                        impact.point.clone(),
+                        self.movement.velocity.clone(),
+                        100.0,
+                        50.0,
+                    )
+                    .burst(rng, (impact.speed / 40.0).ceil() as u32),
                 })
             } else {
+                // explode player
+                let mut particles = Dispersion::new(
+                    self.placement.position.clone(),
+                    self.movement.velocity.scale(0.5),
+                    150.0,
+                    120.0,
+                )
+                .burst(rng, (impact.speed / 10.0).ceil() as u32);
+
+                let dispersion = Dispersion::new(
+                    self.placement.position.clone(),
+                    self.movement.velocity.clone(),
+                    impact.speed,
+                    impact.speed,
+                );
+                particles.append(&mut dispersion.explode(rng, (self.hull().iter()).edges_cycle()));
+                particles.append(&mut dispersion.explode(rng, (self.interior().iter()).edges()));
+
                 Some(Impact {
                     destroyed: true,
-                    particles: Vec::new(),
+                    particles,
                 })
             }
         } else {
