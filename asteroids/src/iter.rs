@@ -95,3 +95,87 @@ mod test_edges_cycle {
         assert_eq!(iter.next(), None);
     }
 }
+
+// iterator adaptor: edges
+
+pub struct Edges<I, T> {
+    iter: I,
+    previous: Option<T>,
+}
+
+impl<I, T> Iterator for Edges<I, T>
+where
+    I: Iterator<Item = T>,
+    T: Clone,
+{
+    type Item = (T, T);
+
+    fn next(&mut self) -> Option<Self::Item> {
+        if let Some(next) = self.iter.next() {
+            match &mut self.previous {
+                None => {
+                    // initialize
+                    self.previous = Some(next);
+                    self.next()
+                }
+                Some(previous) => {
+                    // continue
+                    let edge = (previous.clone(), next.clone());
+                    *previous = next;
+                    Some(edge)
+                }
+            }
+        } else {
+            None
+        }
+    }
+}
+
+// trait with edges method
+
+pub trait EdgesIterator: Sized + Iterator {
+    fn edges(self) -> Edges<Self, Self::Item>;
+}
+
+// _blanket implementation_ of EdgesIterator for all types implementing Iterator
+
+impl<I: Iterator> EdgesIterator for I {
+    fn edges(self) -> Edges<Self, Self::Item> {
+        Edges {
+            iter: self,
+            previous: None,
+        }
+    }
+}
+
+#[cfg(test)]
+mod test_edges {
+    use super::*;
+
+    #[test]
+    fn test_empty() {
+        let mut iter = (0..0).edges();
+        assert_eq!(iter.next(), None);
+    }
+
+    #[test]
+    fn test_length_1() {
+        let mut iter = (0..1).edges();
+        assert_eq!(iter.next(), None);
+    }
+
+    #[test]
+    fn test_length_2() {
+        let mut iter = (0..2).edges();
+        assert_eq!(iter.next(), Some((0, 1)));
+        assert_eq!(iter.next(), None);
+    }
+
+    #[test]
+    fn test_length_3() {
+        let mut iter = (0..3).edges();
+        assert_eq!(iter.next(), Some((0, 1)));
+        assert_eq!(iter.next(), Some((1, 2)));
+        assert_eq!(iter.next(), None);
+    }
+}
