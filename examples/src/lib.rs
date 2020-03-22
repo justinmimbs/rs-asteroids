@@ -115,7 +115,9 @@ impl Particles {
             let mut pieces = Dispersion::new(position.clone(), velocity.clone(), 100.0, 150.0)
                 .explode(
                     &mut self.rng,
-                    Particles::target_shape().iter().edges_cycle(),
+                    (Particles::target_shape().iter())
+                        .map(|point| point.add(position))
+                        .edges_cycle(),
                 );
             self.particles.append(&mut pieces);
 
@@ -137,8 +139,7 @@ impl Particles {
         let mut list = PathList::new();
         render::particles(&self.particles, &mut list);
         if let Some((position, velocity)) = &self.target {
-            let mut shape = Particles::target_shape()
-                .iter()
+            let mut shape = (Particles::target_shape().iter())
                 .map(|point| point.add(position))
                 .collect();
             list.push(&mut shape, 1.0, PathEnd::Closed);

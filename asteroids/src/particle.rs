@@ -130,7 +130,7 @@ impl Dispersion {
                 let (movement, duration) = self.movement(rng, &EXPLODE_DEVIATION, midpoint.angle());
                 Particle {
                     placement: Placement {
-                        position: self.position.add(&midpoint),
+                        position: midpoint,
                         rotation: vector.angle(),
                     },
                     movement,

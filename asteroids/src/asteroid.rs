@@ -149,12 +149,7 @@ impl Asteroid {
                         impact.speed,
                         impact.speed,
                     )
-                    .explode(
-                        rng,
-                        (fragment.boundary().iter())
-                            .map(|point| point.sub(fragment.center()))
-                            .edges_cycle(),
-                    );
+                    .explode(rng, fragment.boundary().iter().edges_cycle());
                     particles.append(&mut fragment_particles);
                 } else {
                     fragments.push(fragment);
