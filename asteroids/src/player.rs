@@ -1,10 +1,12 @@
 use rand_pcg::Pcg32;
 use std::f64::consts::FRAC_PI_2;
 
+use crate::asteroid::Asteroid;
 use crate::blast::Blast;
 use crate::geometry;
 use crate::geometry::{Point, Size, Vector};
 use crate::iter::{EdgesCycleIterator, EdgesIterator};
+use crate::motion;
 use crate::motion::{Collide, Movement, Placement};
 use crate::particle::{Dispersion, Particle};
 use crate::util::Timer;
@@ -243,6 +245,25 @@ impl Player {
                     particles,
                 })
             }
+        } else {
+            None
+        }
+    }
+
+    pub fn interact_asteroid(
+        &mut self,
+        _rng: &mut Pcg32,
+        asteroid: &mut Asteroid,
+    ) -> Option<Impact> {
+        if let Some((_point, self_movement, asteroid_movement)) =
+            motion::collide(self, asteroid, 0.9)
+        {
+            self.movement = self_movement;
+            asteroid.set_movement(asteroid_movement);
+            Some(Impact {
+                destroyed: !self.is_shielding(),
+                particles: Vec::new(),
+            })
         } else {
             None
         }

@@ -71,6 +71,10 @@ impl Asteroid {
         &self.movement
     }
 
+    pub fn set_movement(&mut self, movement: Movement) {
+        self.movement = movement;
+    }
+
     pub fn grid(rng: &mut Pcg32, cols: u32, rows: u32) -> Vec<Asteroid> {
         let mut list = Vec::with_capacity((cols * rows) as usize);
         for row in 0..rows {

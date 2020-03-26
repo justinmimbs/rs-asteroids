@@ -90,6 +90,19 @@ impl Level {
                 }
             }
         }
+
+        // interact: player * asteroids
+
+        if let Some(player) = &mut self.player {
+            if let Some(mut impact) =
+                interact_player_asteroids(&mut self.rng, player, &mut self.asteroids)
+            {
+                self.particles.append(&mut impact.particles);
+                if impact.destroyed {
+                    self.player = None;
+                }
+            }
+        }
     }
 }
 
@@ -98,12 +111,11 @@ fn interact_asteroid_blasts(
     asteroid: &Asteroid,
     blasts: &Vec<Blast>,
 ) -> Option<(usize, asteroid::Impact)> {
-    for (i, blast) in blasts.iter().enumerate() {
-        if let Some(impact) = asteroid.interact_blast(rng, blast) {
-            return Some((i, impact));
-        }
-    }
-    None
+    blasts.iter().enumerate().find_map(|(i, blast)| {
+        asteroid
+            .interact_blast(rng, blast)
+            .map(|impact| (i, impact))
+    })
 }
 
 fn interact_player_blasts(
@@ -111,10 +123,14 @@ fn interact_player_blasts(
     player: &mut Player,
     blasts: &Vec<Blast>,
 ) -> Option<(usize, player::Impact)> {
-    for (i, blast) in blasts.iter().enumerate() {
-        if let Some(impact) = player.interact_blast(rng, blast) {
-            return Some((i, impact));
-        }
-    }
-    None
+    (blasts.iter().enumerate())
+        .find_map(|(i, blast)| player.interact_blast(rng, blast).map(|impact| (i, impact)))
+}
+
+fn interact_player_asteroids(
+    rng: &mut Pcg32,
+    player: &mut Player,
+    asteroids: &mut Vec<Asteroid>,
+) -> Option<player::Impact> {
+    (asteroids.iter_mut()).find_map(|asteroid| player.interact_asteroid(rng, asteroid))
 }
