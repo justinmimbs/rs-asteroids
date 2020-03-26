@@ -206,45 +206,7 @@ impl Player {
                 &impact.point,
                 &blast.velocity().normalize().scale(impact.speed),
             ));
-
-            if self.is_shielding() {
-                self.aux = Aux::Shielding {
-                    delay: Timer::new(impact.speed * 0.002),
-                };
-                Some(Impact {
-                    destroyed: false,
-                    particles: Dispersion::new(
-                        impact.point.clone(),
-                        self.movement.velocity.clone(),
-                        100.0,
-                        50.0,
-                    )
-                    .burst(rng, (impact.speed / 40.0).ceil() as u32),
-                })
-            } else {
-                // explode player
-                let mut particles = Dispersion::new(
-                    self.placement.position.clone(),
-                    self.movement.velocity.scale(0.5),
-                    150.0,
-                    120.0,
-                )
-                .burst(rng, (impact.speed / 10.0).ceil() as u32);
-
-                let dispersion = Dispersion::new(
-                    self.placement.position.clone(),
-                    self.movement.velocity.clone(),
-                    impact.speed,
-                    impact.speed,
-                );
-                particles.append(&mut dispersion.explode(rng, (self.hull().iter()).edges_cycle()));
-                particles.append(&mut dispersion.explode(rng, (self.interior().iter()).edges()));
-
-                Some(Impact {
-                    destroyed: true,
-                    particles,
-                })
-            }
+            Some(self.impact(rng, &impact.point, impact.speed))
         } else {
             None
         }
@@ -252,20 +214,62 @@ impl Player {
 
     pub fn interact_asteroid(
         &mut self,
-        _rng: &mut Pcg32,
+        rng: &mut Pcg32,
         asteroid: &mut Asteroid,
     ) -> Option<Impact> {
-        if let Some((_point, self_movement, asteroid_movement)) =
-            motion::collide(self, asteroid, 0.9)
+        let elasticity = if self.is_shielding() { 1.0 } else { 0.1 };
+        if let Some((impact_point, self_movement, asteroid_movement)) =
+            motion::collide(self, asteroid, elasticity)
         {
             self.movement = self_movement;
             asteroid.set_movement(asteroid_movement);
-            Some(Impact {
-                destroyed: !self.is_shielding(),
-                particles: Vec::new(),
-            })
+            let impact_speed =
+                self.movement.velocity.length() + asteroid.movement().velocity.length();
+            Some(self.impact(rng, &impact_point, impact_speed))
         } else {
             None
+        }
+    }
+
+    fn impact(&mut self, rng: &mut Pcg32, point: &Point, speed: f64) -> Impact {
+        if self.is_shielding() {
+            // bounce
+            self.aux = Aux::Shielding {
+                delay: Timer::new(speed * 0.002),
+            };
+            Impact {
+                destroyed: false,
+                particles: Dispersion::new(
+                    point.clone(),
+                    self.movement.velocity.scale(0.5),
+                    speed * 0.5,
+                    speed * 0.2,
+                )
+                .burst(rng, (speed.sqrt() * 0.5).ceil() as u32),
+            }
+        } else {
+            // explode
+            let mut particles = Dispersion::new(
+                self.placement.position.clone(),
+                self.movement.velocity.scale(0.5),
+                150.0,
+                120.0,
+            )
+            .burst(rng, speed.sqrt().ceil() as u32);
+
+            let dispersion = Dispersion::new(
+                self.placement.position.clone(),
+                self.movement.velocity.clone(),
+                speed,
+                speed,
+            );
+            particles.append(&mut dispersion.explode(rng, (self.hull().iter()).edges_cycle()));
+            particles.append(&mut dispersion.explode(rng, (self.interior().iter()).edges()));
+
+            Impact {
+                destroyed: true,
+                particles,
+            }
         }
     }
 }
