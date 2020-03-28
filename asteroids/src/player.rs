@@ -165,23 +165,26 @@ impl Player {
         self.placement.position = position;
         self.placement.rotation = rotation;
         self.placement.wrap_position(bounds);
-        self.aux = if controls.shield() {
-            let mut delay = match &self.aux {
-                Aux::Shielding { delay } => delay.clone(),
-                _ => Timer::new(0.0),
+
+        if controls.shield() {
+            if let Aux::Shielding { delay } = &mut self.aux {
+                delay.step(dt);
+            } else {
+                self.aux = Aux::Shielding {
+                    delay: Timer::new(0.0),
+                };
             };
-            delay.step(dt);
-            Aux::Shielding { delay }
         } else if controls.fire() {
-            let mut interval = match &self.aux {
-                Aux::Firing { interval } => interval.clone(),
-                _ => Interval::new(FIRING_DELAY, FIRING_DELAY),
+            if let Aux::Firing { interval } = &mut self.aux {
+                interval.step(dt);
+            } else {
+                self.aux = Aux::Firing {
+                    interval: Interval::new(FIRING_DELAY, FIRING_DELAY),
+                };
             };
-            interval.step(dt);
-            Aux::Firing { interval }
         } else {
-            Aux::Off
-        };
+            self.aux = Aux::Off;
+        }
     }
 
     pub fn fire_blast(&mut self) -> Option<Blast> {

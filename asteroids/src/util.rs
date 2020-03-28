@@ -1,4 +1,3 @@
-#[derive(Clone)]
 pub struct Timer(f64);
 
 impl Timer {
@@ -17,7 +16,6 @@ impl Timer {
     }
 }
 
-#[derive(Clone)]
 pub struct Interval {
     period: f64,
     t: f64,
