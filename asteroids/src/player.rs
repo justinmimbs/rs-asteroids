@@ -9,7 +9,7 @@ use crate::iter::{EdgesCycleIterator, EdgesIterator};
 use crate::motion;
 use crate::motion::{Collide, Movement, Placement};
 use crate::particle::{Dispersion, Particle};
-use crate::util::Timer;
+use crate::util::{Interval, Timer};
 
 const HULL: [Point; 7] = [
     Point { x: -19.0, y: -10.0 },
@@ -84,7 +84,7 @@ impl Spaceship {
 
 enum Aux {
     Off,
-    Firing { timer: Timer },
+    Firing { interval: Interval },
     Shielding { delay: Timer },
 }
 
@@ -166,35 +166,33 @@ impl Player {
         self.placement.rotation = rotation;
         self.placement.wrap_position(bounds);
         self.aux = if controls.shield() {
-            let mut delay = if let Aux::Shielding { delay } = &self.aux {
-                delay.clone()
-            } else {
-                Timer::new(0.0)
+            let mut delay = match &self.aux {
+                Aux::Shielding { delay } => delay.clone(),
+                _ => Timer::new(0.0),
             };
             delay.step(dt);
             Aux::Shielding { delay }
         } else if controls.fire() {
-            let mut timer = match &self.aux {
-                Aux::Firing { timer } if timer.is_elapsed() => Timer::new(FIRING_DELAY),
-                Aux::Firing { timer } => timer.clone(),
-                _ => Timer::new(0.0),
+            let mut interval = match &self.aux {
+                Aux::Firing { interval } => interval.clone(),
+                _ => Interval::new(FIRING_DELAY, FIRING_DELAY),
             };
-            timer.step(dt);
-            Aux::Firing { timer }
+            interval.step(dt);
+            Aux::Firing { interval }
         } else {
             Aux::Off
         };
     }
 
-    pub fn fire_blast(&self) -> Option<Blast> {
-        match &self.aux {
-            Aux::Firing { timer } if timer.is_elapsed() => {
+    pub fn fire_blast(&mut self) -> Option<Blast> {
+        match &mut self.aux {
+            Aux::Firing { interval } => interval.next().map(|_| {
                 let speed = self.movement.velocity.length() + BLAST_SPEED;
                 let angle = self.placement.rotation;
                 let position = (self.placement.position)
                     .add(&Vector::from_polar(self.spaceship.radius, angle));
-                Some(Blast::new(position, speed, angle))
-            }
+                Blast::new(position, speed, angle)
+            }),
             _ => None,
         }
     }
