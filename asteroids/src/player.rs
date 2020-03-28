@@ -31,10 +31,10 @@ const INTERIOR: [Point; 5] = [
 
 const SPACESHIP_MASS: f64 = 300.0;
 
-const TURNING_SPEED: f64 = 1.4; // radians / second
+const TURNING_SPEED: f64 = 0.7; // radians / second
 const THRUST_SPEED: f64 = 35.0; // px / second
 const POSITION_FRICTION: f64 = 0.98;
-const ROTATION_FRICTION: f64 = 0.8;
+const ROTATION_FRICTION: f64 = 0.9;
 
 const FIRING_DELAY: f64 = 1.0 / 6.0; // seconds (6 hz)
 const BLAST_SPEED: f64 = 800.0; // px / second
