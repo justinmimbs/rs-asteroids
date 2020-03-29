@@ -13,7 +13,7 @@ use asteroids::{
     iter::EdgesCycleIterator,
     motion,
     motion::{Collide, Movement, Placement},
-    Asteroid, Dispersion, Particle,
+    Asteroid, Controls, Dispersion, Particle, Player,
 };
 
 const BOUNDS: Size = Size {
@@ -421,5 +421,44 @@ impl Collide for Disk {
     }
     fn mass(&self) -> f64 {
         self.radius * self.radius
+    }
+}
+
+// 08
+
+#[wasm_bindgen]
+pub struct Exhaust {
+    player: Player,
+}
+
+#[wasm_bindgen]
+impl Exhaust {
+    pub fn new() -> Self {
+        Exhaust {
+            player: Player::new(BOUNDS.center()),
+        }
+    }
+    pub fn step(&mut self, dt: f64, thrust: bool) -> () {
+        let controls = Controls::new(if thrust { 4 } else { 0 });
+        self.player.step(dt, &BOUNDS, controls);
+    }
+    pub fn render(&self) -> PathList {
+        let mut list = PathList::new();
+
+        // moving
+        render::player(&self.player, &mut list);
+
+        // stationary
+        let translate = (BOUNDS.center()).sub(&self.player.center().add(&Point::new(50.0, 0.0)));
+        let mut hull = (self.player.hull().iter().map(|p| p.add(&translate))).collect();
+        list.push(&mut hull, 1.0, PathEnd::Closed);
+        let mut interior = (self.player.interior().iter().map(|p| p.add(&translate))).collect();
+        list.push(&mut interior, 0.7, PathEnd::Open);
+        for (alpha, path) in self.player.exhaust() {
+            let mut path = path.iter().map(|p| p.add(&translate)).collect();
+            list.push(&mut path, alpha, PathEnd::Open);
+        }
+
+        list
     }
 }

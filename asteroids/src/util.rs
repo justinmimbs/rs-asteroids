@@ -7,8 +7,12 @@ impl Timer {
 
     pub fn step(&mut self, dt: f64) -> () {
         if 0.0 < self.0 {
-            self.0 -= dt;
+            self.0 = (self.0 - dt).max(0.0);
         }
+    }
+
+    pub fn remaining(&self) -> f64 {
+        self.0
     }
 
     pub fn is_elapsed(&self) -> bool {

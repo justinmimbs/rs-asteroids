@@ -81,6 +81,9 @@ impl PathList {
 pub fn player<'a>(player: &Player, list: &'a mut PathList) -> &'a mut PathList {
     list.push(&mut player.hull(), 1.0, PathEnd::Closed);
     list.push(&mut player.interior(), 0.7, PathEnd::Open);
+    for (alpha, mut path) in player.exhaust() {
+        list.push(&mut path, alpha, PathEnd::Open);
+    }
     if let Some(mut shield) = player.shield() {
         list.push(&mut shield, 1.0, PathEnd::Closed);
     }

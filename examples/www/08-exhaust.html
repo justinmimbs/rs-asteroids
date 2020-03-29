@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta charset="utf-8">
+        <title>Exhaust</title>
+    </head>
+    <body>
+        <canvas id="canvas"></canvas>
+        <script type="module">
+
+import init, { Exhaust } from './wasm/examples.js';
+import createScreen from './screen.js';
+
+let screen;
+let app;
+let time;
+let thrust = false;
+
+async function main() {
+    const wasm = await init();
+    screen = createScreen(wasm.memory, document.querySelector('#canvas'));
+    app = Exhaust.new();
+    time = Date.now();
+
+    screen.draw(app.render());
+    requestAnimationFrame(loop);
+
+    document.querySelector('#canvas').addEventListener('pointerdown', (_) => { thrust = true; });
+    document.addEventListener('pointerup', (_) => { thrust = false; });
+}
+
+function loop() {
+    const now = Date.now();
+    app.step((now - time) / 1000, thrust);
+    time = now;
+    screen.draw(app.render());
+    requestAnimationFrame(loop);
+}
+
+main();
+
+        </script>
+    </body>
+</html>

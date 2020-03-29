@@ -29,6 +29,8 @@ const INTERIOR: [Point; 5] = [
     Point { x: -19.0, y: 10.0 },
 ];
 
+const NOZZLE: Point = Point { x: -19.0, y: 5.0 };
+
 const SPACESHIP_MASS: f64 = 300.0;
 
 const TURNING_SPEED: f64 = 0.7; // radians / second
@@ -36,8 +38,12 @@ const THRUST_SPEED: f64 = 35.0; // px / second
 const POSITION_FRICTION: f64 = 0.98;
 const ROTATION_FRICTION: f64 = 0.9;
 
-const FIRING_DELAY: f64 = 1.0 / 6.0; // seconds (6 hz)
+const FIRING_INTERVAL: f64 = 1.0 / 6.0; // seconds (6 hz)
 const BLAST_SPEED: f64 = 800.0; // px / second
+
+const THRUSTING_INTERVAL: f64 = 1.0 / 12.0; // seconds (12 hz)
+const EXHAUST_SPEED: f64 = 120.0; // px / second
+const EXHAUST_MAX_AGE: f64 = 0.2; // seconds
 
 pub struct Controls(u32);
 
@@ -68,6 +74,7 @@ struct Spaceship {
     hull: Vec<Point>,
     interior: Vec<Point>,
     shield: Vec<Point>,
+    nozzle: Point,
 }
 
 impl Spaceship {
@@ -78,6 +85,7 @@ impl Spaceship {
             hull: HULL.iter().map(|point| point.scale(factor)).collect(),
             interior: INTERIOR.iter().map(|point| point.scale(factor)).collect(),
             shield: geometry::ngon(16, radius + 1.0),
+            nozzle: NOZZLE.scale(factor),
         }
     }
 }
@@ -86,6 +94,11 @@ enum Aux {
     Off,
     Firing { interval: Interval },
     Shielding { delay: Timer },
+}
+
+enum Engine {
+    Idle,
+    Thrusting { interval: Interval },
 }
 
 pub struct Impact {
@@ -98,6 +111,8 @@ pub struct Player {
     movement: Movement,
     spaceship: Spaceship,
     aux: Aux,
+    engine: Engine,
+    exhaust: Vec<Timer>,
 }
 
 impl Player {
@@ -113,6 +128,8 @@ impl Player {
             },
             spaceship: Spaceship::new(18.0),
             aux: Aux::Off,
+            engine: Engine::Idle,
+            exhaust: Vec::new(),
         }
     }
 
@@ -137,6 +154,23 @@ impl Player {
         } else {
             None
         }
+    }
+
+    pub fn exhaust(&self) -> Vec<(f64, Vec<Point>)> {
+        self.exhaust
+            .iter()
+            .map(|timer| {
+                let alpha = timer.remaining() / EXHAUST_MAX_AGE;
+                let distance = (EXHAUST_MAX_AGE - timer.remaining()) * EXHAUST_SPEED;
+                let Point { x, y } = self.spaceship.nozzle;
+                let path = vec![
+                    Point::new(x, -y),
+                    Point::new(x - distance, 0.0),
+                    Point::new(x, y),
+                ];
+                (alpha, self.placement.transform_points(&path))
+            })
+            .collect()
     }
 
     pub fn step(&mut self, dt: f64, bounds: &Size, controls: Controls) -> () {
@@ -166,6 +200,7 @@ impl Player {
         self.placement.rotation = rotation;
         self.placement.wrap_position(bounds);
 
+        // aux
         if controls.shield() {
             if let Aux::Shielding { delay } = &mut self.aux {
                 delay.step(dt);
@@ -179,12 +214,34 @@ impl Player {
                 interval.step(dt);
             } else {
                 self.aux = Aux::Firing {
-                    interval: Interval::new(FIRING_DELAY, FIRING_DELAY),
+                    interval: Interval::new(FIRING_INTERVAL, FIRING_INTERVAL),
                 };
             };
         } else {
             self.aux = Aux::Off;
         }
+
+        // engine
+        if controls.thrust() {
+            if let Engine::Idle = &self.engine {
+                self.engine = Engine::Thrusting {
+                    interval: Interval::new(THRUSTING_INTERVAL, THRUSTING_INTERVAL),
+                };
+            }
+        } else {
+            self.engine = Engine::Idle;
+        }
+
+        // exhaust
+        for timer in self.exhaust.iter_mut() {
+            timer.step(dt);
+        }
+        if let Engine::Thrusting { interval } = &mut self.engine {
+            interval.step(dt);
+            self.exhaust
+                .extend(interval.map(|age| Timer::new(EXHAUST_MAX_AGE - age)));
+        }
+        self.exhaust.retain(|timer| !timer.is_elapsed());
     }
 
     pub fn fire_blast(&mut self) -> Option<Blast> {
