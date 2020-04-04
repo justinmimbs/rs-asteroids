@@ -1,5 +1,6 @@
 mod asteroid;
 mod blast;
+pub mod font;
 pub mod geometry;
 pub mod iter;
 mod level;

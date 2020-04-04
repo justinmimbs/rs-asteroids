@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta charset="utf-8">
+        <title>Type Specimen</title>
+    </head>
+    <body>
+        <canvas id="canvas"></canvas>
+        <script type="module">
+
+import init, { type_specimen } from './wasm/examples.js';
+import createScreen from './screen.js';
+
+async function main() {
+    const wasm = await init();
+    const screen = createScreen(wasm.memory, document.querySelector('#canvas'));
+
+    screen.draw(type_specimen());
+}
+
+main();
+
+        </script>
+    </body>
+</html>

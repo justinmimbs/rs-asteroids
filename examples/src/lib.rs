@@ -8,6 +8,7 @@ use app::{
     render::{PathEnd, PathList},
 };
 use asteroids::{
+    font::Font,
     geometry,
     geometry::{Circle, Point, Polygon, Radians, Size, Vector},
     iter::EdgesCycleIterator,
@@ -461,4 +462,21 @@ impl Exhaust {
 
         list
     }
+}
+
+// 09
+
+#[wasm_bindgen]
+pub fn type_specimen() -> PathList {
+    let mut list = PathList::new();
+
+    let mut polylines = Vec::new();
+    polylines.extend(Font::new(144.0).typeset_line(&Point::new(50.5, 200.5), "ASTEROIDS V"));
+    polylines.extend(Font::new(48.0).typeset_line(&Point::new(50.5, 300.5), "ASTEROIDS V"));
+    polylines.extend(Font::new(16.0).typeset_line(&Point::new(50.5, 360.5), "ASTEROIDS V"));
+    for mut polyline in polylines {
+        list.push(&mut polyline, 1.0, PathEnd::Open);
+    }
+
+    list
 }
