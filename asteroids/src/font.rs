@@ -257,19 +257,16 @@ mod master {
         C(30, 17, 29, 21, 27, 24),
     ];
     const UPPERCASE_A: [Command; 5] = [M(0, 48), L(16, 0), L(32, 48), M(6, 30), H(26)];
-    const UPPERCASE_B: [Command; 12] = [
+    const UPPERCASE_B: [Command; 9] = [
         M(3, 22),
+        H(16),
+        C(24, 22, 30, 27, 30, 35),
+        C(30, 43, 24, 48, 16, 48),
+        H(3),
         V(0),
         H(16),
         C(22, 0, 28, 4, 28, 11),
         C(28, 18, 22, 22, 16, 22),
-        M(3, 22),
-        V(48),
-        H(16),
-        C(24, 48, 30, 43, 30, 35),
-        C(30, 27, 24, 22, 16, 22),
-        M(3, 22),
-        H(16),
     ];
     const UPPERCASE_C: [Command; 5] = [
         M(29, 40),
@@ -286,17 +283,8 @@ mod master {
         H(14),
         C(23, 48, 30, 39, 30, 24),
     ];
-    const UPPERCASE_E: [Command; 8] = [
-        M(29, 0),
-        H(3),
-        V(24),
-        M(29, 48),
-        H(3),
-        V(24),
-        M(3, 24),
-        H(26),
-    ];
-    const UPPERCASE_F: [Command; 7] = [M(29, 0), H(3), V(24), M(3, 48), V(24), M(3, 24), H(26)];
+    const UPPERCASE_E: [Command; 6] = [M(29, 0), H(3), V(48), H(29), M(3, 24), H(26)];
+    const UPPERCASE_F: [Command; 5] = [M(29, 0), H(3), V(48), M(3, 24), H(26)];
     const UPPERCASE_G: [Command; 7] = [
         M(29, 8),
         C(26, 3, 22, 0, 17, 0),
@@ -306,18 +294,7 @@ mod master {
         V(27),
         H(15),
     ];
-    const UPPERCASE_H: [Command; 10] = [
-        M(2, 0),
-        V(24),
-        M(30, 0),
-        V(24),
-        M(30, 48),
-        V(24),
-        M(2, 48),
-        V(24),
-        M(2, 24),
-        H(30),
-    ];
+    const UPPERCASE_H: [Command; 6] = [M(2, 0), V(48), M(30, 0), V(48), M(2, 24), H(30)];
     const UPPERCASE_I: [Command; 6] = [M(16, 0), V(48), M(9, 0), H(23), M(9, 48), H(23)];
     const UPPERCASE_J: [Command; 4] = [
         M(25, 0),
@@ -336,10 +313,8 @@ mod master {
         C(0, 39, 7, 48, 16, 48),
         C(25, 48, 32, 39, 32, 24),
     ];
-    const UPPERCASE_P: [Command; 8] = [
+    const UPPERCASE_P: [Command; 6] = [
         M(4, 48),
-        V(26),
-        M(4, 26),
         V(0),
         H(15),
         C(23, 0, 29, 5, 29, 13),
@@ -355,16 +330,13 @@ mod master {
         C(7, 48, 0, 39, 0, 24),
         C(0, 9, 7, 0, 16, 0),
     ];
-    const UPPERCASE_R: [Command; 11] = [
+    const UPPERCASE_R: [Command; 8] = [
         M(4, 48),
-        V(26),
-        M(4, 26),
         V(0),
         H(15),
         C(23, 0, 29, 5, 29, 13),
         C(29, 21, 23, 26, 15, 26),
-        M(4, 26),
-        H(15),
+        H(4),
         M(15, 26),
         L(31, 48),
     ];
@@ -377,7 +349,7 @@ mod master {
         C(29, 43, 23, 48, 16, 48),
         C(10, 48, 5, 45, 3, 40),
     ];
-    const UPPERCASE_T: [Command; 6] = [M(16, 0), V(48), M(16, 0), H(2), M(16, 0), H(30)];
+    const UPPERCASE_T: [Command; 4] = [M(16, 0), V(48), M(2, 0), H(30)];
     const UPPERCASE_U: [Command; 5] = [
         M(30, 0),
         V(33),
@@ -388,6 +360,6 @@ mod master {
     const UPPERCASE_V: [Command; 3] = [M(0, 0), L(16, 48), L(32, 0)];
     const UPPERCASE_W: [Command; 5] = [M(0, 0), L(4, 48), L(16, 23), L(28, 48), L(32, 0)];
     const UPPERCASE_X: [Command; 4] = [M(2, 0), L(30, 48), M(30, 0), L(2, 48)];
-    const UPPERCASE_Y: [Command; 6] = [M(16, 24), L(2, 0), M(16, 24), L(30, 0), M(16, 24), V(48)];
+    const UPPERCASE_Y: [Command; 5] = [M(2, 0), L(16, 24), L(30, 0), M(16, 24), V(48)];
     const UPPERCASE_Z: [Command; 4] = [M(2, 0), H(30), L(2, 48), H(30)];
 }
