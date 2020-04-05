@@ -471,9 +471,17 @@ pub fn type_specimen() -> PathList {
     let mut list = PathList::new();
 
     let mut polylines = Vec::new();
-    polylines.extend(Font::new(144.0).typeset_line(&Point::new(50.5, 200.5), "ASTEROIDS V"));
-    polylines.extend(Font::new(48.0).typeset_line(&Point::new(50.5, 300.5), "ASTEROIDS V"));
-    polylines.extend(Font::new(16.0).typeset_line(&Point::new(50.5, 360.5), "ASTEROIDS V"));
+    polylines.extend(Font::new(144.0).typeset_line(&Point::new(50.5, 200.5), "ASTEROIDS"));
+    polylines
+        .extend(Font::new(48.0).typeset_line(&Point::new(50.5, 300.5), "PRESS ENTER TO START"));
+    polylines.extend(Font::new(32.0).typeset_line(&Point::new(50.5, 380.5), "SCORE 0123456789"));
+    polylines.extend(
+        Font::new(24.0).typeset_line(&Point::new(50.5, 460.5), "LEFT THRUST RIGHT FIRE SHIELD"),
+    );
+    polylines.extend(Font::new(12.0).typeset_line(
+        &Point::new(50.5, 520.5),
+        "A B C D E F G H I J K L M N O P Q R S T U V W X Y Z",
+    ));
     for mut polyline in polylines {
         list.push(&mut polyline, 1.0, PathEnd::Open);
     }
