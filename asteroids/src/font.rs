@@ -14,9 +14,10 @@ pub struct Font {
 impl Font {
     pub fn new(height: f64) -> Self {
         let scale = height / master::HEIGHT as f64;
+        let letter_spacing = 2.0;
         Font {
             height,
-            width: (master::WIDTH as f64 * scale).ceil(),
+            width: scale * master::WIDTH as f64 + letter_spacing,
             default: path::Data(&master::DEFAULT).to_polylines(scale),
             glyphs: master::GLYPHS
                 .iter()
@@ -60,6 +61,7 @@ mod path {
     impl<'a> Data<'a> {
         pub fn to_polylines(self, scale: f64) -> Vec<Vec<Point>> {
             if let Some((&Command::M(x, y), commands)) = self.0.split_first() {
+                let max_error = (12.0 * scale).max(2.0).min(24.0);
                 let mut polylines = Vec::new();
                 let mut polyline = vec![to_point(scale, x, y)];
                 for command in commands {
@@ -76,7 +78,7 @@ mod path {
                         &Command::C(x2, y2, x3, y3, x4, y4) => {
                             if let Some(p1) = polyline.last().map(|p| p.clone()) {
                                 let points = flatten_bezier(
-                                    12.0 * scale,
+                                    max_error,
                                     &p1,
                                     &to_point(scale, x2, y2),
                                     &to_point(scale, x3, y3),
