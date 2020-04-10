@@ -6,9 +6,7 @@ impl Timer {
     }
 
     pub fn step(&mut self, dt: f64) -> () {
-        if 0.0 < self.0 {
-            self.0 = (self.0 - dt).max(0.0);
-        }
+        self.0 -= dt;
     }
 
     pub fn remaining(&self) -> f64 {
