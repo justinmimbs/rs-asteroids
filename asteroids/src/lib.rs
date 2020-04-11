@@ -56,7 +56,7 @@ impl Game {
         match &mut self.state {
             MainTitle(asteroids) => {
                 if controls.start() {
-                    self.state = Playing(Level::new(1, self.bounds.clone()))
+                    self.state = Playing(Level::new(1, &self.bounds))
                 } else {
                     for asteroid in asteroids.iter_mut() {
                         asteroid.step(dt, &self.bounds);
@@ -64,7 +64,7 @@ impl Game {
                 }
             }
             Playing(level) => {
-                level.step(dt, controls);
+                level.step(dt, &self.bounds, controls);
             }
         }
     }

@@ -7,7 +7,6 @@ use crate::iter::EdgesCycleIterator;
 
 pub type Radians = f64;
 
-#[derive(Clone)]
 pub struct Size {
     pub width: f64,
     pub height: f64,

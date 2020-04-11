@@ -10,7 +10,6 @@ use crate::player;
 use crate::player::{Controls, Player};
 
 pub struct Level {
-    bounds: Size,
     rng: Pcg32,
     pub player: Option<Player>,
     pub asteroids: Vec<Asteroid>,
@@ -19,20 +18,19 @@ pub struct Level {
 }
 
 impl Level {
-    pub fn new(n: u8, bounds: Size) -> Self {
+    pub fn new(n: u8, bounds: &Size) -> Self {
         let mut rng = Pcg32::seed_from_u64(1979 * 11 * n as u64);
         let count = 3 + 2 * n as u32;
         Level {
             player: Some(Player::new(bounds.center())),
-            asteroids: Asteroid::field(&mut rng, &bounds, count, 100.0),
+            asteroids: Asteroid::field(&mut rng, bounds, count, 100.0),
             blasts: Vec::new(),
             particles: Vec::new(),
-            bounds,
             rng,
         }
     }
 
-    pub fn step(&mut self, dt: f64, controls: Controls) -> () {
+    pub fn step(&mut self, dt: f64, bounds: &Size, controls: Controls) -> () {
         if dt <= 0.0 {
             return ();
         }
@@ -40,21 +38,21 @@ impl Level {
         // step
 
         if let Some(player) = &mut self.player {
-            player.step(dt, &self.bounds, controls);
+            player.step(dt, bounds, controls);
             self.blasts.extend(player.fire_blast());
         }
 
         for asteroid in self.asteroids.iter_mut() {
-            asteroid.step(dt, &self.bounds);
+            asteroid.step(dt, bounds);
         }
 
         for blast in self.blasts.iter_mut() {
-            blast.step(dt, &self.bounds);
+            blast.step(dt, bounds);
         }
         self.blasts.retain(|blast| !blast.is_expired());
 
         for particle in self.particles.iter_mut() {
-            particle.step(dt, &self.bounds);
+            particle.step(dt, bounds);
         }
         self.particles.retain(|particle| !particle.is_expired());
 
