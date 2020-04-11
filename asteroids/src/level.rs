@@ -18,16 +18,23 @@ pub struct Level {
 }
 
 impl Level {
+    fn rng(n: u8) -> Pcg32 {
+        Pcg32::seed_from_u64(1979 * 11 * n as u64)
+    }
+
     pub fn new(n: u8, bounds: &Size) -> Self {
-        let mut rng = Pcg32::seed_from_u64(1979 * 11 * n as u64);
-        let count = 3 + 2 * n as u32;
         Level {
+            rng: Level::rng(n),
             player: Some(Player::new(bounds.center())),
-            asteroids: Asteroid::field(&mut rng, bounds, count, 100.0),
+            asteroids: Level::asteroid_field(n, bounds),
             blasts: Vec::new(),
             particles: Vec::new(),
-            rng,
         }
+    }
+
+    pub fn asteroid_field(n: u8, bounds: &Size) -> Vec<Asteroid> {
+        let count = 3 + 2 * n as u32;
+        Asteroid::field(&mut Level::rng(n), bounds, count, 100.0)
     }
 
     pub fn step(&mut self, dt: f64, bounds: &Size, controls: Controls) -> () {
