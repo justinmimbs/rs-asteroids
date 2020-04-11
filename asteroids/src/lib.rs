@@ -11,19 +11,27 @@ mod util;
 
 pub use asteroid::Asteroid;
 pub use blast::Blast;
-
 pub use level::Level;
 pub use particle::{Dispersion, Particle};
 pub use player::{Controls, Player};
+
+use geometry::Size;
 
 pub struct Game {
     level: Level,
 }
 
 impl Game {
+    pub fn bounds() -> Size {
+        Size {
+            width: 1200.0,
+            height: 900.0,
+        }
+    }
+
     pub fn new() -> Self {
         Game {
-            level: Level::new(1),
+            level: Level::new(1, Game::bounds()),
         }
     }
 
