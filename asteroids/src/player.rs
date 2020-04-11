@@ -67,6 +67,9 @@ impl Controls {
     pub fn shield(&self) -> bool {
         self.0 & 16 != 0
     }
+    pub fn start(&self) -> bool {
+        self.0 & 32 != 0
+    }
 }
 
 struct Spaceship {

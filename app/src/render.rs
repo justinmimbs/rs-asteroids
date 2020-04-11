@@ -90,14 +90,14 @@ pub fn player<'a>(player: &Player, list: &'a mut PathList) -> &'a mut PathList {
     list
 }
 
-pub fn asteroids<'a>(asteroids: &Vec<Asteroid>, list: &'a mut PathList) -> &'a mut PathList {
+pub fn asteroids<'a>(asteroids: &[Asteroid], list: &'a mut PathList) -> &'a mut PathList {
     for asteroid in asteroids.iter() {
         list.push(&mut asteroid.to_path(), 0.5, PathEnd::Closed);
     }
     list
 }
 
-pub fn blasts<'a>(blasts: &Vec<Blast>, list: &'a mut PathList) -> &'a mut PathList {
+pub fn blasts<'a>(blasts: &[Blast], list: &'a mut PathList) -> &'a mut PathList {
     for blast in blasts.iter() {
         let (a, b) = blast.endpoints();
         list.push(&mut vec![a, b], 1.0, PathEnd::Open);
@@ -105,7 +105,7 @@ pub fn blasts<'a>(blasts: &Vec<Blast>, list: &'a mut PathList) -> &'a mut PathLi
     list
 }
 
-pub fn particles<'a>(particles: &Vec<Particle>, list: &'a mut PathList) -> &'a mut PathList {
+pub fn particles<'a>(particles: &[Particle], list: &'a mut PathList) -> &'a mut PathList {
     for particle in particles.iter() {
         let (a, b) = particle.endpoints();
         let alpha = 0.5 + (0.5 - (particle.rotation() / PI).rem_euclid(1.0)).abs();

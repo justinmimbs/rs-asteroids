@@ -45,6 +45,7 @@ const controls = {
     thrust: false,
     fire: false,
     shield: false,
+    start: false,
 };
 
 function bitpackControls() {
@@ -53,7 +54,8 @@ function bitpackControls() {
         + (controls.right ? 2 : 0)
         + (controls.thrust ? 4 : 0)
         + (controls.fire ? 8 : 0)
-        + (controls.shield ? 16 : 0);
+        + (controls.shield ? 16 : 0)
+        + (controls.start ? 32 : 0);
 }
 
 function handleKey(down) {
@@ -83,6 +85,9 @@ function keyToControl(key) {
         case 'f':
         case 'F':
             return 'fire';
+
+        case 'Enter':
+            return 'start';
 
         default:
             return null;
