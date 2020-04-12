@@ -30,6 +30,9 @@ pub struct Point {
     pub y: f64,
 }
 
+pub type Polyline = Vec<Point>;
+pub type Vector = Point;
+
 impl Ord for Point {
     fn cmp(&self, other: &Self) -> Ordering {
         match self.x.partial_cmp(&other.x) {
@@ -52,8 +55,6 @@ impl PartialEq for Point {
     }
 }
 impl Eq for Point {}
-
-pub type Vector = Point;
 
 impl Point {
     pub fn new(x: f64, y: f64) -> Self {

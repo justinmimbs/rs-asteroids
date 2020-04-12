@@ -1,8 +1,11 @@
 use std::collections::BTreeMap as Map;
 
-use crate::geometry::Point;
+use crate::geometry::{Point, Polyline};
 
-pub type Polyline = Vec<Point>;
+pub enum Align {
+    Left,
+    Center,
+}
 
 pub struct Font {
     height: f64,
@@ -26,8 +29,12 @@ impl Font {
         }
     }
 
-    pub fn typeset_line(&self, &Point { x, y }: &Point, text: &str) -> Vec<Polyline> {
-        let mut position = Point::new(x, y - self.height);
+    pub fn typeset_line(&self, align: Align, &Point { x, y }: &Point, text: &str) -> Vec<Polyline> {
+        let offset_x = match align {
+            Align::Left => 0.0,
+            Align::Center => 0.5 * text.len() as f64 * self.width,
+        };
+        let mut position = Point::new(x - offset_x, y - self.height);
         let mut line = Vec::new();
         for c in text.chars() {
             let glyph = (self.glyphs.get(&c).unwrap_or(&self.default))
@@ -41,7 +48,7 @@ impl Font {
 }
 
 mod path {
-    use crate::geometry::Point;
+    use crate::geometry::{Point, Polyline};
 
     pub enum Command {
         M(u8, u8),
@@ -59,7 +66,7 @@ mod path {
     }
 
     impl<'a> Data<'a> {
-        pub fn to_polylines(self, scale: f64) -> Vec<Vec<Point>> {
+        pub fn to_polylines(self, scale: f64) -> Vec<Polyline> {
             if let Some((&Command::M(x, y), commands)) = self.0.split_first() {
                 let max_error = (12.0 * scale).max(2.0).min(24.0);
                 let mut polylines = Vec::new();
@@ -116,13 +123,7 @@ mod path {
         }
     }
 
-    fn flatten_bezier(
-        max_error: f64,
-        p1: &Point,
-        p2: &Point,
-        p3: &Point,
-        p4: &Point,
-    ) -> Vec<Point> {
+    fn flatten_bezier(max_error: f64, p1: &Point, p2: &Point, p3: &Point, p4: &Point) -> Polyline {
         let length = p1.distance(p2) + p2.distance(p3) + p3.distance(p4);
         let n = (length / max_error).ceil() as u32;
         (1..(n + 1))

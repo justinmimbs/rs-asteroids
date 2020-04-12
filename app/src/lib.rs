@@ -29,6 +29,7 @@ impl App {
         render::asteroids(self.0.asteroids(), &mut list);
         render::blasts(self.0.blasts(), &mut list);
         render::particles(self.0.particles(), &mut list);
+        render::text(self.0.text(), &mut list);
         list
     }
 }

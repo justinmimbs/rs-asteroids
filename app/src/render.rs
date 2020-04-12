@@ -78,7 +78,7 @@ impl PathList {
 
 //
 
-pub fn player<'a>(player: &Player, list: &'a mut PathList) -> &'a mut PathList {
+pub fn player(player: &Player, list: &mut PathList) {
     list.push(&mut player.hull(), 1.0, PathEnd::Closed);
     list.push(&mut player.interior(), 0.7, PathEnd::Open);
     for (alpha, mut path) in player.exhaust() {
@@ -87,29 +87,31 @@ pub fn player<'a>(player: &Player, list: &'a mut PathList) -> &'a mut PathList {
     if let Some(mut shield) = player.shield() {
         list.push(&mut shield, 1.0, PathEnd::Closed);
     }
-    list
 }
 
-pub fn asteroids<'a>(asteroids: &[Asteroid], list: &'a mut PathList) -> &'a mut PathList {
+pub fn asteroids(asteroids: &[Asteroid], list: &mut PathList) {
     for asteroid in asteroids.iter() {
         list.push(&mut asteroid.to_path(), 0.5, PathEnd::Closed);
     }
-    list
 }
 
-pub fn blasts<'a>(blasts: &[Blast], list: &'a mut PathList) -> &'a mut PathList {
+pub fn blasts(blasts: &[Blast], list: &mut PathList) {
     for blast in blasts.iter() {
         let (a, b) = blast.endpoints();
         list.push(&mut vec![a, b], 1.0, PathEnd::Open);
     }
-    list
 }
 
-pub fn particles<'a>(particles: &[Particle], list: &'a mut PathList) -> &'a mut PathList {
+pub fn particles(particles: &[Particle], list: &mut PathList) {
     for particle in particles.iter() {
         let (a, b) = particle.endpoints();
         let alpha = 0.5 + (0.5 - (particle.rotation() / PI).rem_euclid(1.0)).abs();
         list.push(&mut vec![a, b], alpha, PathEnd::Open);
     }
-    list
+}
+
+pub fn text(text: &[Vec<Point>], list: &mut PathList) {
+    for polyline in text {
+        list.push(&mut polyline.clone(), 1.0, PathEnd::Open);
+    }
 }

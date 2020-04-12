@@ -8,12 +8,12 @@ use app::{
     render::{PathEnd, PathList},
 };
 use asteroids::{
-    font::Font,
     geometry,
     geometry::{Circle, Point, Polygon, Radians, Size, Vector},
     iter::EdgesCycleIterator,
     motion,
     motion::{Collide, Movement, Placement},
+    typography::{Align, Font},
     Asteroid, Controls, Dispersion, Particle, Player,
 };
 
@@ -485,7 +485,7 @@ pub fn type_specimen() -> PathList {
     let mut position = Point::new(50.5, 0.5);
     for &(height, text) in lines.iter() {
         position.y += 1.25 * height + 30.0;
-        polylines.extend(Font::new(height).typeset_line(&position, text));
+        polylines.extend(Font::new(height).typeset_line(Align::Left, &position, text));
     }
 
     for mut polyline in polylines {
