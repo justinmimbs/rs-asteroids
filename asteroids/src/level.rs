@@ -11,6 +11,7 @@ use crate::player::{Controls, Player};
 
 pub struct Level {
     rng: Pcg32,
+    pub number: u8,
     pub player: Option<Player>,
     pub asteroids: Vec<Asteroid>,
     pub blasts: Vec<Blast>,
@@ -18,23 +19,24 @@ pub struct Level {
 }
 
 impl Level {
-    fn rng(n: u8) -> Pcg32 {
-        Pcg32::seed_from_u64(1979 * 11 * n as u64)
+    fn rng(number: u8) -> Pcg32 {
+        Pcg32::seed_from_u64(1979 * 11 * number as u64)
     }
 
-    pub fn new(n: u8, bounds: &Size) -> Self {
+    pub fn new(number: u8, bounds: &Size) -> Self {
         Level {
-            rng: Level::rng(n),
+            rng: Level::rng(number),
+            number: number,
             player: Some(Player::new(bounds.center())),
-            asteroids: Level::asteroid_field(n, bounds),
+            asteroids: Level::asteroid_field(number, bounds),
             blasts: Vec::new(),
             particles: Vec::new(),
         }
     }
 
-    pub fn asteroid_field(n: u8, bounds: &Size) -> Vec<Asteroid> {
-        let count = 3 + 2 * n as u32;
-        Asteroid::field(&mut Level::rng(n), bounds, count, 100.0)
+    pub fn asteroid_field(number: u8, bounds: &Size) -> Vec<Asteroid> {
+        let count = 3 + 2 * number as u32;
+        Asteroid::field(&mut Level::rng(number), bounds, count, 100.0)
     }
 
     pub fn step(&mut self, dt: f64, bounds: &Size, controls: Controls) -> () {

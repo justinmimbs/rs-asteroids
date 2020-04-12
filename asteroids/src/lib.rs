@@ -33,19 +33,27 @@ struct FontLibrary {
     large: Font,
 }
 
-pub enum State {
+enum State {
     MainTitle {
         text: Vec<Polyline>,
         asteroids: Vec<Asteroid>,
     },
-    LevelTitle {
+    LevelIntro {
+        number: u8,
         text: Vec<Polyline>,
         asteroids: Vec<Asteroid>,
         timer: Timer,
     },
-    Playing {
+    LevelPlay {
         level: Level,
+        ended: Option<LevelEnd>,
     },
+}
+
+struct LevelEnd {
+    cleared: bool,
+    text: Vec<Polyline>,
+    timer: Timer,
 }
 
 use State::*;
@@ -75,7 +83,7 @@ impl Game {
         text.extend(font.small.typeset_line(
             Align::Center,
             &Point::new(center.x, center.y + 96.0),
-            "PRESS ENTER",
+            "PRESS START",
         ));
         MainTitle {
             text,
@@ -83,13 +91,14 @@ impl Game {
         }
     }
 
-    fn level_title(n: u8, bounds: &Size, font: &FontLibrary) -> State {
+    fn level_intro(number: u8, bounds: &Size, font: &FontLibrary) -> State {
         let duration = 1.5;
-        let title = format!("LEVEL {}", n);
+        let title = format!("LEVEL {}", number);
         let text = (font.medium).typeset_line(Align::Center, &bounds.center(), &title);
-        let mut asteroids = Level::asteroid_field(n, &bounds);
+        let mut asteroids = Level::asteroid_field(number, &bounds);
         asteroids_step(-duration, &bounds, &mut asteroids);
-        LevelTitle {
+        LevelIntro {
+            number: number,
             text,
             asteroids,
             timer: Timer::new(duration),
@@ -103,31 +112,97 @@ impl Game {
         match &mut self.state {
             MainTitle { asteroids, .. } => {
                 if controls.start() {
-                    self.state = Game::level_title(1, &self.bounds, &self.font);
+                    self.state = Game::level_intro(1, &self.bounds, &self.font);
                 } else {
                     asteroids_step(dt, &self.bounds, asteroids);
                 }
             }
-            LevelTitle {
-                asteroids, timer, ..
+            LevelIntro {
+                number,
+                asteroids,
+                timer,
+                ..
             } => {
                 timer.step(dt);
                 if timer.is_elapsed() {
-                    let mut level = Level::new(1, &self.bounds);
+                    let mut level = Level::new(*number, &self.bounds);
                     level.step(-timer.remaining(), &self.bounds, controls);
-                    self.state = Playing { level }
+                    self.state = LevelPlay { level, ended: None }
                 } else {
                     asteroids_step(dt, &self.bounds, asteroids);
                 }
             }
-            Playing { level } => {
+            LevelPlay {
+                level,
+                ended: ended @ None,
+            } => {
                 level.step(dt, &self.bounds, controls);
+
+                if level.asteroids.is_empty() {
+                    *ended = Some(LevelEnd {
+                        cleared: true,
+                        text: Vec::new(),
+                        timer: Timer::new(3.0),
+                    });
+                } else if level.player.is_none() {
+                    *ended = Some(LevelEnd {
+                        cleared: false,
+                        text: Vec::new(),
+                        timer: Timer::new(7.0),
+                    });
+                }
+            }
+            LevelPlay {
+                level,
+                ended: Some(end),
+            } => {
+                end.timer.step(dt);
+
+                if end.cleared {
+                    if end.timer.is_elapsed() || controls.start() {
+                        self.state = Game::level_intro(level.number + 1, &self.bounds, &self.font);
+                    } else {
+                        level.step(dt, &self.bounds, controls);
+
+                        let t = end.timer.remaining();
+                        if t <= 2.0 && 2.0 < dt + t {
+                            end.text = (self.font.medium).typeset_line(
+                                Align::Center,
+                                &self.bounds.center(),
+                                "CLEARED",
+                            );
+                        }
+                    }
+                } else {
+                    if end.timer.is_elapsed() {
+                        self.state = Game::main_title(&self.bounds, &self.font);
+                    } else if controls.start() {
+                        self.state = Game::level_intro(level.number, &self.bounds, &self.font);
+                    } else {
+                        level.step(dt, &self.bounds, controls);
+
+                        let t = end.timer.remaining().floor() as u8;
+                        if t <= 5 && t < (dt + end.timer.remaining()).floor() as u8 {
+                            let center = self.bounds.center();
+                            end.text = (self.font.small).typeset_line(
+                                Align::Center,
+                                &Point::new(center.x, center.y - 64.0),
+                                "PRESS START TO CONTINUE",
+                            );
+                            end.text.extend((self.font.medium).typeset_line(
+                                Align::Center,
+                                &Point::new(center.x, center.y + 64.0),
+                                &format!("{}", t),
+                            ));
+                        }
+                    }
+                }
             }
         }
     }
 
     pub fn player(&self) -> &Option<Player> {
-        if let Playing { level } = &self.state {
+        if let LevelPlay { level, .. } = &self.state {
             &level.player
         } else {
             &None
@@ -136,19 +211,19 @@ impl Game {
     pub fn asteroids(&self) -> &[Asteroid] {
         match &self.state {
             MainTitle { asteroids, .. } => &asteroids,
-            LevelTitle { asteroids, .. } => &asteroids,
-            Playing { level } => &level.asteroids,
+            LevelIntro { asteroids, .. } => &asteroids,
+            LevelPlay { level, .. } => &level.asteroids,
         }
     }
     pub fn blasts(&self) -> &[Blast] {
-        if let Playing { level } = &self.state {
+        if let LevelPlay { level, .. } = &self.state {
             &level.blasts
         } else {
             &[]
         }
     }
     pub fn particles(&self) -> &[Particle] {
-        if let Playing { level } = &self.state {
+        if let LevelPlay { level, .. } = &self.state {
             &level.particles
         } else {
             &[]
@@ -157,8 +232,11 @@ impl Game {
     pub fn text(&self) -> &[Polyline] {
         match &self.state {
             MainTitle { text, .. } => &text,
-            LevelTitle { text, .. } => &text,
-            Playing { .. } => &[],
+            LevelIntro { text, .. } => &text,
+            LevelPlay { ended: None, .. } => &[],
+            LevelPlay {
+                ended: Some(end), ..
+            } => &end.text,
         }
     }
 }
