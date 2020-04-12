@@ -471,7 +471,8 @@ pub fn type_specimen() -> PathList {
     let mut list = PathList::new();
 
     let lines = [
-        (144.0, "ASTEROIDS 3"),
+        (144.0, "ASTEROIDS"),
+        (96.0, "0123456789 S"),
         (72.0, "LEVEL 2 CLEARED"),
         (48.0, "PRESS ENTER TO START"),
         (32.0, "SCORE 0123456789 BLAST 6 HZ"),
@@ -481,11 +482,17 @@ pub fn type_specimen() -> PathList {
         (9.0, "COZY LUMMOX GIVES SMART SQUID WHO ASKS FOR JOB PEN"),
     ];
 
+    let label_font = Font::new(9.0);
     let mut polylines = Vec::new();
-    let mut position = Point::new(50.5, 0.5);
+    let mut position = Point::new(120.5, 0.5);
     for &(height, text) in lines.iter() {
         position.y += 1.25 * height + 30.0;
         polylines.extend(Font::new(height).typeset_line(Align::Left, &position, text));
+        polylines.extend(label_font.typeset_line(
+            Align::Right,
+            &Point::new(position.x - 30.0, position.y),
+            &format!("{}", height),
+        ));
     }
 
     for mut polyline in polylines {

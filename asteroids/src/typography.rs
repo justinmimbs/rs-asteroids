@@ -5,6 +5,7 @@ use crate::geometry::{Point, Polyline};
 pub enum Align {
     Left,
     Center,
+    Right,
 }
 
 pub struct Font {
@@ -33,6 +34,7 @@ impl Font {
         let offset_x = match align {
             Align::Left => 0.0,
             Align::Center => 0.5 * text.len() as f64 * self.width,
+            Align::Right => text.len() as f64 * self.width,
         };
         let mut position = Point::new(x - offset_x, y - self.height);
         let mut line = Vec::new();
