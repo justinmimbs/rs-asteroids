@@ -44,18 +44,19 @@ enum State {
         asteroids: Vec<Asteroid>,
         timer: Timer,
     },
-    LevelPlay {
+    ActiveLevel {
         level: Level,
-        ended: Option<LevelEnd>,
+        state: LevelState,
     },
 }
 
-struct LevelEnd {
-    cleared: bool,
-    text: Vec<Polyline>,
-    timer: Timer,
+enum LevelState {
+    Playing,
+    Cleared { text: Vec<Polyline>, timer: Timer },
+    Destroyed { text: Vec<Polyline>, timer: Timer },
 }
 
+use LevelState::*;
 use State::*;
 
 impl Game {
@@ -127,74 +128,78 @@ impl Game {
                 if timer.is_elapsed() {
                     let mut level = Level::new(*number, &self.bounds);
                     level.step(-timer.remaining(), &self.bounds, controls);
-                    self.state = LevelPlay { level, ended: None }
+                    self.state = ActiveLevel {
+                        level,
+                        state: Playing,
+                    }
                 } else {
                     asteroids_step(dt, &self.bounds, asteroids);
                 }
             }
-            LevelPlay {
+            ActiveLevel {
                 level,
-                ended: ended @ None,
+                state: state @ Playing,
             } => {
                 level.step(dt, &self.bounds, controls);
 
                 if level.asteroids.is_empty() {
-                    *ended = Some(LevelEnd {
-                        cleared: true,
+                    *state = Cleared {
                         text: Vec::new(),
                         timer: Timer::new(3.0),
-                    });
+                    };
                 } else if level.player.is_none() {
-                    *ended = Some(LevelEnd {
-                        cleared: false,
+                    *state = Destroyed {
                         text: Vec::new(),
                         timer: Timer::new(7.0),
-                    });
+                    };
                 }
             }
-            LevelPlay {
+            ActiveLevel {
                 level,
-                ended: Some(end),
+                state: Cleared { text, timer },
             } => {
-                end.timer.step(dt);
+                timer.step(dt);
 
-                if end.cleared {
-                    if end.timer.is_elapsed() || controls.start() {
-                        self.state = Game::level_intro(level.number + 1, &self.bounds, &self.font);
-                    } else {
-                        level.step(dt, &self.bounds, controls);
-
-                        let t = end.timer.remaining();
-                        if t <= 2.0 && 2.0 < dt + t {
-                            end.text = (self.font.medium).typeset_line(
-                                Align::Center,
-                                &self.bounds.center(),
-                                "CLEARED",
-                            );
-                        }
-                    }
+                if timer.is_elapsed() || controls.start() {
+                    self.state = Game::level_intro(level.number + 1, &self.bounds, &self.font);
                 } else {
-                    if end.timer.is_elapsed() {
-                        self.state = Game::main_title(&self.bounds, &self.font);
-                    } else if controls.start() {
-                        self.state = Game::level_intro(level.number, &self.bounds, &self.font);
-                    } else {
-                        level.step(dt, &self.bounds, controls);
+                    level.step(dt, &self.bounds, controls);
 
-                        let t = end.timer.remaining().floor() as u8;
-                        if t <= 5 && t < (dt + end.timer.remaining()).floor() as u8 {
-                            let center = self.bounds.center();
-                            end.text = (self.font.small).typeset_line(
-                                Align::Center,
-                                &Point::new(center.x, center.y - 64.0),
-                                "PRESS START TO CONTINUE",
-                            );
-                            end.text.extend((self.font.medium).typeset_line(
-                                Align::Center,
-                                &Point::new(center.x, center.y + 64.0),
-                                &format!("{}", t),
-                            ));
-                        }
+                    let t = timer.remaining();
+                    if t <= 2.0 && 2.0 < dt + t {
+                        *text = (self.font.medium).typeset_line(
+                            Align::Center,
+                            &self.bounds.center(),
+                            "CLEARED",
+                        );
+                    }
+                }
+            }
+            ActiveLevel {
+                level,
+                state: Destroyed { text, timer },
+            } => {
+                timer.step(dt);
+                if timer.is_elapsed() {
+                    self.state = Game::main_title(&self.bounds, &self.font);
+                } else if controls.start() {
+                    self.state = Game::level_intro(level.number, &self.bounds, &self.font);
+                } else {
+                    level.step(dt, &self.bounds, controls);
+
+                    let t = timer.remaining().floor() as u8;
+                    if t <= 5 && t < (dt + timer.remaining()).floor() as u8 {
+                        let center = self.bounds.center();
+                        *text = (self.font.small).typeset_line(
+                            Align::Center,
+                            &Point::new(center.x, center.y - 64.0),
+                            "PRESS START TO CONTINUE",
+                        );
+                        text.extend((self.font.medium).typeset_line(
+                            Align::Center,
+                            &Point::new(center.x, center.y + 64.0),
+                            &format!("{}", t),
+                        ));
                     }
                 }
             }
@@ -202,7 +207,7 @@ impl Game {
     }
 
     pub fn player(&self) -> &Option<Player> {
-        if let LevelPlay { level, .. } = &self.state {
+        if let ActiveLevel { level, .. } = &self.state {
             &level.player
         } else {
             &None
@@ -212,18 +217,18 @@ impl Game {
         match &self.state {
             MainTitle { asteroids, .. } => &asteroids,
             LevelIntro { asteroids, .. } => &asteroids,
-            LevelPlay { level, .. } => &level.asteroids,
+            ActiveLevel { level, .. } => &level.asteroids,
         }
     }
     pub fn blasts(&self) -> &[Blast] {
-        if let LevelPlay { level, .. } = &self.state {
+        if let ActiveLevel { level, .. } = &self.state {
             &level.blasts
         } else {
             &[]
         }
     }
     pub fn particles(&self) -> &[Particle] {
-        if let LevelPlay { level, .. } = &self.state {
+        if let ActiveLevel { level, .. } = &self.state {
             &level.particles
         } else {
             &[]
@@ -233,10 +238,11 @@ impl Game {
         match &self.state {
             MainTitle { text, .. } => &text,
             LevelIntro { text, .. } => &text,
-            LevelPlay { ended: None, .. } => &[],
-            LevelPlay {
-                ended: Some(end), ..
-            } => &end.text,
+            ActiveLevel { state, .. } => match state {
+                Playing => &[],
+                Cleared { text, .. } => &text,
+                Destroyed { text, .. } => &text,
+            },
         }
     }
 }
