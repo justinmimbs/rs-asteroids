@@ -83,7 +83,7 @@ impl Game {
         let mut text = font.large.typeset_line(Align::Center, &center, "ASTEROIDS");
         text.extend(font.small.typeset_line(
             Align::Center,
-            &Point::new(center.x, center.y + 96.0),
+            &Point::new(center.x, center.y + 3.0 * font.small.height()),
             "PRESS START",
         ));
         MainTitle {
@@ -187,17 +187,17 @@ impl Game {
                 } else {
                     level.step(dt, &self.bounds, controls);
 
-                    let t = timer.remaining().floor() as u8;
-                    if t <= 5 && t < (dt + timer.remaining()).floor() as u8 {
+                    let t = timer.remaining().ceil() as u8;
+                    if t <= 5 && t < (dt + timer.remaining()).ceil() as u8 {
                         let center = self.bounds.center();
                         *text = (self.font.small).typeset_line(
                             Align::Center,
-                            &Point::new(center.x, center.y - 64.0),
+                            &Point::new(center.x, center.y - self.font.medium.height()),
                             "PRESS START TO CONTINUE",
                         );
                         text.extend((self.font.medium).typeset_line(
                             Align::Center,
-                            &Point::new(center.x, center.y + 64.0),
+                            &Point::new(center.x, center.y + 2.0 * self.font.small.height()),
                             &format!("{}", t),
                         ));
                     }

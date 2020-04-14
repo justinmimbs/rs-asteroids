@@ -30,6 +30,10 @@ impl Font {
         }
     }
 
+    pub fn height(&self) -> f64 {
+        self.height
+    }
+
     pub fn typeset_line(&self, align: Align, &Point { x, y }: &Point, text: &str) -> Vec<Polyline> {
         let offset_x = match align {
             Align::Left => 0.0,
