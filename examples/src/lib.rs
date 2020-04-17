@@ -400,6 +400,7 @@ impl Disk {
             radius,
         }
     }
+
     fn step(&mut self, dt: f64) -> () {
         self.placement
             .apply_movement(&self.movement, dt)
@@ -439,10 +440,12 @@ impl Exhaust {
             player: Player::new(BOUNDS.center()),
         }
     }
+
     pub fn step(&mut self, dt: f64, thrust: bool) -> () {
         let controls = Controls::new(if thrust { 4 } else { 0 });
         self.player.step(dt, &BOUNDS, controls);
     }
+
     pub fn render(&self) -> PathList {
         let mut list = PathList::new();
 
@@ -500,4 +503,51 @@ pub fn type_specimen() -> PathList {
     }
 
     list
+}
+
+// 10
+
+#[wasm_bindgen]
+pub struct ClosestPoint {
+    point: Point,
+    line: (Point, Point),
+}
+
+#[wasm_bindgen]
+impl ClosestPoint {
+    pub fn new() -> Self {
+        let center = BOUNDS.center();
+        ClosestPoint {
+            line: (
+                Point::new(center.x - 100.0, center.y + 200.0),
+                Point::new(center.x + 200.0, center.y - 100.0),
+            ),
+            point: center,
+        }
+    }
+
+    pub fn line(&mut self, x1: f64, y1: f64, x2: f64, y2: f64) -> () {
+        self.line = (Point::new(x1, y1), Point::new(x2, y2));
+    }
+
+    pub fn render(&self) -> PathList {
+        let (a, b) = &self.line;
+        let closest = self.point.closest_point_on_line(a, b);
+
+        let mut list = PathList::new();
+        render_ngon(4, 2.0, &self.point, 1.0, &mut list);
+        list.push(&mut vec![a.clone(), b.clone()], 1.0, PathEnd::Open);
+        render_ngon(4, 2.0, &closest, 1.0, &mut list);
+        list.push(&mut vec![self.point.clone(), closest], 0.5, PathEnd::Open);
+        list
+    }
+
+    pub fn distance1(&self) -> f64 {
+        let closest = self.point.closest_point_on_line(&self.line.0, &self.line.1);
+        self.point.distance(&closest)
+    }
+
+    pub fn distance2(&self) -> f64 {
+        self.point.distance_to_line(&self.line.0, &self.line.1)
+    }
 }

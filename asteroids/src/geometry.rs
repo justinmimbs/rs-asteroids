@@ -161,6 +161,18 @@ impl Point {
         self.scale(1.0 - t).add(&other.scale(t))
     }
 
+    pub fn distance_to_line(&self, a: &Point, b: &Point) -> f64 {
+        let ab = b.sub(a);
+        let ap = self.sub(a);
+        ap.cross(&ab).abs() / ab.length()
+    }
+
+    pub fn closest_point_on_line(&self, a: &Point, b: &Point) -> Self {
+        let n = b.sub(a).normalize();
+        let ac = n.scale(self.sub(a).dot(&n));
+        a.add(&ac)
+    }
+
     /// Returns unit vector in the direction from self to other.
     pub fn direction_to(&self, other: &Point) -> Self {
         other.sub(self).normalize()
