@@ -110,8 +110,8 @@ pub fn particles(particles: &[Particle], list: &mut PathList) {
     }
 }
 
-pub fn text(text: &[Vec<Point>], list: &mut PathList) {
-    for polyline in text {
-        list.push(&mut polyline.clone(), 1.0, PathEnd::Open);
+pub fn polylines(polylines: &[Vec<Point>], alpha: f64, list: &mut PathList) {
+    for polyline in polylines {
+        list.push(&mut polyline.clone(), alpha, PathEnd::Open);
     }
 }

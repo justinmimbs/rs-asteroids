@@ -24,6 +24,7 @@ use util::Timer;
 pub struct Game {
     bounds: Size,
     font: FontLibrary,
+    // high_score: u32,
     state: State,
 }
 
@@ -39,12 +40,14 @@ enum State {
         asteroids: Vec<Asteroid>,
     },
     LevelIntro {
+        score: u32,
         number: u8,
         text: Vec<Polyline>,
         asteroids: Vec<Asteroid>,
         timer: Timer,
     },
     ActiveLevel {
+        score: u32,
         level: Level,
         state: LevelState,
     },
@@ -72,8 +75,8 @@ impl Game {
         };
         Game {
             state: Game::main_title(&bounds, &font),
-            font,
             bounds,
+            font,
         }
     }
 
@@ -92,18 +95,27 @@ impl Game {
         }
     }
 
-    fn level_intro(number: u8, bounds: &Size, font: &FontLibrary) -> State {
+    fn level_intro(score: u32, number: u8, bounds: &Size, font: &FontLibrary) -> State {
         let duration = 1.5;
         let title = format!("LEVEL {}", number);
         let text = (font.medium).typeset_line(Align::Center, &bounds.center(), &title);
         let mut asteroids = Level::asteroid_field(number, &bounds);
         asteroids_step(-duration, &bounds, &mut asteroids);
         LevelIntro {
-            number: number,
+            score,
+            number,
             text,
             asteroids,
             timer: Timer::new(duration),
         }
+    }
+
+    fn display_score(score: u32, bounds: &Size, font: &FontLibrary) -> Vec<Polyline> {
+        font.small.typeset_line(
+            Align::Right,
+            &Point::new(bounds.width - 30.0, 20.0 + font.small.height()),
+            &format!("{}", score),
+        )
     }
 
     pub fn step(&mut self, dt: f64, controls: Controls) -> () {
@@ -113,12 +125,13 @@ impl Game {
         match &mut self.state {
             MainTitle { asteroids, .. } => {
                 if controls.start() {
-                    self.state = Game::level_intro(1, &self.bounds, &self.font);
+                    self.state = Game::level_intro(0, 1, &self.bounds, &self.font);
                 } else {
                     asteroids_step(dt, &self.bounds, asteroids);
                 }
             }
             LevelIntro {
+                score,
                 number,
                 asteroids,
                 timer,
@@ -129,6 +142,7 @@ impl Game {
                     let mut level = Level::new(*number, &self.bounds);
                     level.step(-timer.remaining(), &self.bounds, controls);
                     self.state = ActiveLevel {
+                        score: *score,
                         level,
                         state: Playing,
                     }
@@ -137,6 +151,7 @@ impl Game {
                 }
             }
             ActiveLevel {
+                score: _,
                 level,
                 state: state @ Playing,
             } => {
@@ -155,13 +170,19 @@ impl Game {
                 }
             }
             ActiveLevel {
+                score,
                 level,
                 state: Cleared { text, timer },
             } => {
                 timer.step(dt);
 
                 if timer.is_elapsed() || controls.start() {
-                    self.state = Game::level_intro(level.number + 1, &self.bounds, &self.font);
+                    self.state = Game::level_intro(
+                        *score + level.score,
+                        level.number + 1,
+                        &self.bounds,
+                        &self.font,
+                    );
                 } else {
                     level.step(dt, &self.bounds, controls);
 
@@ -176,6 +197,7 @@ impl Game {
                 }
             }
             ActiveLevel {
+                score,
                 level,
                 state: Destroyed { text, timer },
             } => {
@@ -183,7 +205,7 @@ impl Game {
                 if timer.is_elapsed() {
                     self.state = Game::main_title(&self.bounds, &self.font);
                 } else if controls.start() {
-                    self.state = Game::level_intro(level.number, &self.bounds, &self.font);
+                    self.state = Game::level_intro(*score, level.number, &self.bounds, &self.font);
                 } else {
                     level.step(dt, &self.bounds, controls);
 
@@ -243,6 +265,15 @@ impl Game {
                 Cleared { text, .. } => &text,
                 Destroyed { text, .. } => &text,
             },
+        }
+    }
+    pub fn hud(&self) -> Vec<Polyline> {
+        match &self.state {
+            MainTitle { .. } => Vec::new(),
+            LevelIntro { score, .. } => Game::display_score(*score, &self.bounds, &self.font),
+            ActiveLevel { score, level, .. } => {
+                Game::display_score(*score + level.score, &self.bounds, &self.font)
+            }
         }
     }
 }

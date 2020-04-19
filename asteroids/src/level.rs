@@ -12,6 +12,7 @@ use crate::player::{Controls, Player};
 pub struct Level {
     rng: Pcg32,
     pub number: u8,
+    pub score: u32,
     pub player: Option<Player>,
     pub asteroids: Vec<Asteroid>,
     pub blasts: Vec<Blast>,
@@ -27,6 +28,7 @@ impl Level {
         Level {
             rng: Level::rng(number),
             number: number,
+            score: 0,
             player: Some(Player::new(bounds.center())),
             asteroids: Level::asteroid_field(number, bounds),
             blasts: Vec::new(),
@@ -72,6 +74,7 @@ impl Level {
             if let Some((i, mut impact)) =
                 interact_asteroid_blasts(&mut self.rng, &asteroid, &self.blasts)
             {
+                self.score += 1;
                 self.blasts.remove(i);
                 asteroids.append(&mut impact.fragments);
                 self.particles.append(&mut impact.particles);

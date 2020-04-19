@@ -29,7 +29,8 @@ impl App {
         render::asteroids(self.0.asteroids(), &mut list);
         render::blasts(self.0.blasts(), &mut list);
         render::particles(self.0.particles(), &mut list);
-        render::text(self.0.text(), &mut list);
+        render::polylines(self.0.text(), 1.0, &mut list);
+        render::polylines(&self.0.hud(), 0.3, &mut list);
         list
     }
 }
