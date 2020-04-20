@@ -8,6 +8,9 @@ use crate::iter::EdgesCycleIterator;
 use crate::motion::{Collide, Movement, Placement};
 use crate::particle::{Dispersion, Particle};
 
+pub const MAX_RADIUS: f64 = 55.0;
+pub const MIN_RADIUS: f64 = 18.0;
+
 pub struct Impact {
     pub fragments: Vec<Asteroid>,
     pub particles: Vec<Particle>,
@@ -22,7 +25,7 @@ pub struct Asteroid {
 
 impl Asteroid {
     pub fn new(rng: &mut Pcg32) -> Self {
-        let radius: f64 = rng.gen_range(25.0, 55.0);
+        let radius: f64 = rng.gen_range(MIN_RADIUS, MAX_RADIUS);
         Asteroid {
             radius,
             placement: Placement {
@@ -146,7 +149,7 @@ impl Asteroid {
                         .add(&impact_movement)
                 };
 
-                if fragment.radius() < 18.0 {
+                if fragment.radius() < MIN_RADIUS {
                     let mut fragment_particles = Dispersion::new(
                         fragment.center().clone(),
                         fragment.movement().velocity.clone(),

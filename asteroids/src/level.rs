@@ -3,8 +3,10 @@ use rand_pcg::Pcg32;
 
 use crate::asteroid;
 use crate::asteroid::Asteroid;
+use crate::blast;
 use crate::blast::Blast;
 use crate::geometry::Size;
+use crate::motion::Collide;
 use crate::particle::Particle;
 use crate::player;
 use crate::player::{Controls, Player};
@@ -71,10 +73,10 @@ impl Level {
 
         let mut asteroids = Vec::new();
         for asteroid in self.asteroids.drain(..) {
-            if let Some((i, mut impact)) =
+            if let Some((i, mut impact, hit)) =
                 interact_asteroid_blasts(&mut self.rng, &asteroid, &self.blasts)
             {
-                self.score += 1;
+                self.score += hit.score();
                 self.blasts.remove(i);
                 asteroids.append(&mut impact.fragments);
                 self.particles.append(&mut impact.particles);
@@ -113,15 +115,38 @@ impl Level {
     }
 }
 
+struct Hit {
+    offset: f64,
+    radius: f64,
+    distance: f64,
+}
+
+impl Hit {
+    fn score(&self) -> u32 {
+        let offset_accuracy = 1.0 - (self.offset / self.radius);
+        let radius_difficulty = 1.0
+            - (self.radius - asteroid::MIN_RADIUS) / (asteroid::MAX_RADIUS - asteroid::MIN_RADIUS);
+        let distance_difficulty = self.distance / blast::MAX_DISTANCE;
+        let combined = offset_accuracy * 0.6 + radius_difficulty * 0.3 + distance_difficulty * 0.1;
+        (combined.powi(2) * 100.0).ceil() as u32
+    }
+}
+
 fn interact_asteroid_blasts(
     rng: &mut Pcg32,
     asteroid: &Asteroid,
     blasts: &Vec<Blast>,
-) -> Option<(usize, asteroid::Impact)> {
+) -> Option<(usize, asteroid::Impact, Hit)> {
     blasts.iter().enumerate().find_map(|(i, blast)| {
-        asteroid
-            .interact_blast(rng, blast)
-            .map(|impact| (i, impact))
+        asteroid.interact_blast(rng, blast).map(|impact| {
+            let (a, b) = blast.endpoints();
+            let hit = Hit {
+                offset: asteroid.center().distance_to_line(&a, &b),
+                radius: asteroid.radius(),
+                distance: blast.distance_traveled(),
+            };
+            (i, impact, hit)
+        })
     })
 }
 

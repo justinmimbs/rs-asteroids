@@ -4,7 +4,8 @@ use crate::geometry::{Point, Polygon, Size, Vector};
 use crate::motion::Collide;
 use crate::util::Timer;
 
-const BLAST_MASS: f64 = 100.0;
+pub const MAX_DISTANCE: f64 = 1200.0;
+const MASS: f64 = 100.0;
 
 pub struct Blast {
     position: Point,
@@ -23,7 +24,7 @@ impl Blast {
         Blast {
             position,
             velocity: Vector::from_polar(speed, angle),
-            expiration: Timer::new(1200.0 / speed),
+            expiration: Timer::new(MAX_DISTANCE / speed),
             dt: 0.0,
         }
     }
@@ -34,6 +35,10 @@ impl Blast {
             .wrap(bounds);
         self.expiration.step(dt);
         self.dt = dt;
+    }
+
+    pub fn distance_traveled(&self) -> f64 {
+        MAX_DISTANCE - self.velocity.length() * self.expiration.remaining()
     }
 
     pub fn is_expired(&self) -> bool {
@@ -69,7 +74,7 @@ impl Blast {
             if let Some(impact_point) = maybe_impact_point {
                 Some(Impact {
                     point: impact_point,
-                    speed: self.velocity.length() * (BLAST_MASS / (BLAST_MASS + object.mass())),
+                    speed: self.velocity.length() * (MASS / (MASS + object.mass())),
                 })
             } else {
                 None
