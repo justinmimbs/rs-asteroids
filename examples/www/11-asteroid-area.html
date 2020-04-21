@@ -2,20 +2,20 @@
 <html>
     <head>
         <meta charset="utf-8">
-        <title>Asteroid Grid</title>
+        <title>Asteroid Area</title>
     </head>
     <body>
         <canvas id="canvas"></canvas>
         <script type="module">
 
-import init, { asteroid_grid } from './wasm/examples.js';
+import init, { asteroid_area } from './wasm/examples.js';
 import createScreen from './screen.js';
 
 async function main() {
     const wasm = await init();
     const screen = createScreen(wasm.memory, document.querySelector('#canvas'));
 
-    screen.draw(asteroid_grid(1979, 7, 5));
+    screen.draw(asteroid_area(1979, 7, 5));
 }
 
 main();

@@ -264,12 +264,20 @@ impl Polygon<'_> {
         segments
             .into_iter()
             .flat_map(|a| {
-                (self.0)
-                    .iter()
+                (self.0.iter())
                     .edges_cycle()
                     .filter_map(move |b| intersect(Inter::SegmentSegment, a.0, a.1, b.0, b.1))
             })
             .collect()
+    }
+
+    pub fn area(self) -> f64 {
+        (self.0.iter())
+            .edges_cycle()
+            .map(|(a, b)| (b.x - a.x) * (b.y + a.y))
+            .sum::<f64>()
+            .abs()
+            / 2.0
     }
 }
 

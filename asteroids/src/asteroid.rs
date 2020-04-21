@@ -10,6 +10,7 @@ use crate::particle::{Dispersion, Particle};
 
 pub const MAX_RADIUS: f64 = 55.0;
 pub const MIN_RADIUS: f64 = 18.0;
+const MIN_AREA: f64 = 400.0;
 
 pub struct Impact {
     pub fragments: Vec<Asteroid>,
@@ -21,11 +22,13 @@ pub struct Asteroid {
     placement: Placement,
     movement: Movement,
     polygon: Vec<Point>,
+    area: f64,
 }
 
 impl Asteroid {
     pub fn new(rng: &mut Pcg32) -> Self {
         let radius: f64 = rng.gen_range(MIN_RADIUS, MAX_RADIUS);
+        let polygon = Asteroid::shape(rng, radius);
         Asteroid {
             radius,
             placement: Placement {
@@ -39,7 +42,8 @@ impl Asteroid {
                 ),
                 angular_velocity: rng.gen_range(-1.0, 1.0),
             },
-            polygon: Asteroid::shape(rng, radius),
+            area: Polygon(&polygon).area(),
+            polygon,
         }
     }
 
@@ -58,7 +62,10 @@ impl Asteroid {
 
     pub fn from_polygon(polygon: &Vec<Point>) -> Self {
         let Circle { center, radius } = Circle::enclose(polygon);
-        let polygon = polygon.iter().map(|point| point.sub(&center)).collect();
+        let polygon = polygon
+            .iter()
+            .map(|point| point.sub(&center))
+            .collect::<Vec<_>>();
         Asteroid {
             radius,
             placement: Placement {
@@ -66,6 +73,7 @@ impl Asteroid {
                 rotation: 0.0,
             },
             movement: Movement::zero(),
+            area: Polygon(&polygon).area(),
             polygon,
         }
     }
@@ -78,13 +86,17 @@ impl Asteroid {
         self.movement = movement;
     }
 
+    pub fn area(&self) -> f64 {
+        self.area
+    }
+
     pub fn grid(rng: &mut Pcg32, cols: u32, rows: u32) -> Vec<Asteroid> {
         let mut list = Vec::with_capacity((cols * rows) as usize);
         for row in 0..rows {
             for col in 0..cols {
                 let mut asteroid = Asteroid::new(rng);
-                asteroid.placement.position.x = (100 + col * 200) as f64;
-                asteroid.placement.position.y = (100 + row * 200) as f64;
+                asteroid.placement.position.x = ((col + 1) * 150) as f64;
+                asteroid.placement.position.y = ((row + 1) * 150) as f64;
                 list.push(asteroid);
             }
         }
@@ -149,7 +161,7 @@ impl Asteroid {
                         .add(&impact_movement)
                 };
 
-                if fragment.radius() < MIN_RADIUS {
+                if fragment.area() < MIN_AREA {
                     let mut fragment_particles = Dispersion::new(
                         fragment.center().clone(),
                         fragment.movement().velocity.clone(),
@@ -187,6 +199,6 @@ impl Collide for Asteroid {
         &self.movement
     }
     fn mass(&self) -> f64 {
-        self.radius.powi(2)
+        self.area
     }
 }

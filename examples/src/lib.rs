@@ -551,3 +551,27 @@ impl ClosestPoint {
         self.point.distance_to_line(&self.line.0, &self.line.1)
     }
 }
+
+// 11
+
+#[wasm_bindgen]
+pub fn asteroid_area(seed: u32, rows: u32, cols: u32) -> PathList {
+    let mut rng = Pcg32::seed_from_u64(seed as u64);
+    let asteroids = Asteroid::grid(&mut rng, rows, cols);
+    let mut list = PathList::new();
+    render::asteroids(&asteroids, &mut list);
+
+    // labels
+    let font = Font::new(9.0);
+    let offset = Point::new(0.0, 69.0);
+    for asteroid in asteroids {
+        let text = font.typeset_line(
+            Align::Center,
+            &asteroid.center().add(&offset),
+            &format!("{}", asteroid.area().round()),
+        );
+        render::polylines(&text, 1.0, &mut list);
+    }
+
+    list
+}
