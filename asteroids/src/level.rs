@@ -3,7 +3,7 @@ use rand_pcg::Pcg32;
 
 use crate::asteroid;
 use crate::asteroid::Asteroid;
-use crate::blast;
+
 use crate::blast::Blast;
 use crate::geometry::Size;
 use crate::motion::Collide;
@@ -11,10 +11,32 @@ use crate::particle::Particle;
 use crate::player;
 use crate::player::{Controls, Player};
 
+struct Stats {
+    blasts_fired: u32,
+    asteroids_hit: u32,
+    mass_cleared: f64,
+}
+
+impl Stats {
+    fn new() -> Self {
+        Stats {
+            blasts_fired: 0,
+            asteroids_hit: 0,
+            mass_cleared: 0.0,
+        }
+    }
+
+    fn score(&self) -> f64 {
+        let efficiency = (self.mass_cleared / self.blasts_fired as f64) / 400.0;
+        let accuracy = self.asteroids_hit as f64 / self.blasts_fired as f64;
+        self.mass_cleared * efficiency.sqrt() * accuracy
+    }
+}
+
 pub struct Level {
     rng: Pcg32,
     pub number: u8,
-    pub score: u32,
+    stats: Stats,
     pub player: Option<Player>,
     pub asteroids: Vec<Asteroid>,
     pub blasts: Vec<Blast>,
@@ -30,7 +52,7 @@ impl Level {
         Level {
             rng: Level::rng(number),
             number: number,
-            score: 0,
+            stats: Stats::new(),
             player: Some(Player::new(bounds.center())),
             asteroids: Level::asteroid_field(number, bounds),
             blasts: Vec::new(),
@@ -43,6 +65,10 @@ impl Level {
         Asteroid::field(&mut Level::rng(number), bounds, count, 100.0)
     }
 
+    pub fn score(&self) -> u32 {
+        self.stats.score().ceil() as u32
+    }
+
     pub fn step(&mut self, dt: f64, bounds: &Size, controls: Controls) -> () {
         if dt <= 0.0 {
             return ();
@@ -52,7 +78,10 @@ impl Level {
 
         if let Some(player) = &mut self.player {
             player.step(dt, bounds, controls);
-            self.blasts.extend(player.fire_blast());
+            if let Some(blast) = player.fire_blast() {
+                self.stats.blasts_fired += 1;
+                self.blasts.push(blast);
+            }
         }
 
         for asteroid in self.asteroids.iter_mut() {
@@ -73,10 +102,13 @@ impl Level {
 
         let mut asteroids = Vec::new();
         for asteroid in self.asteroids.drain(..) {
-            if let Some((i, mut impact, hit)) =
+            if let Some((i, mut impact)) =
                 interact_asteroid_blasts(&mut self.rng, &asteroid, &self.blasts)
             {
-                self.score += hit.score();
+                let remaining_mass = impact.fragments.iter().map(|f| f.mass()).sum::<f64>();
+                self.stats.asteroids_hit += 1;
+                self.stats.mass_cleared += asteroid.mass() - remaining_mass;
+                //
                 self.blasts.remove(i);
                 asteroids.append(&mut impact.fragments);
                 self.particles.append(&mut impact.particles);
@@ -115,38 +147,15 @@ impl Level {
     }
 }
 
-struct Hit {
-    offset: f64,
-    radius: f64,
-    distance: f64,
-}
-
-impl Hit {
-    fn score(&self) -> u32 {
-        let offset_accuracy = 1.0 - (self.offset / self.radius);
-        let radius_difficulty = 1.0
-            - (self.radius - asteroid::MIN_RADIUS) / (asteroid::MAX_RADIUS - asteroid::MIN_RADIUS);
-        let distance_difficulty = self.distance / blast::MAX_DISTANCE;
-        let combined = offset_accuracy * 0.6 + radius_difficulty * 0.3 + distance_difficulty * 0.1;
-        (combined.powi(2) * 100.0).ceil() as u32
-    }
-}
-
 fn interact_asteroid_blasts(
     rng: &mut Pcg32,
     asteroid: &Asteroid,
     blasts: &Vec<Blast>,
-) -> Option<(usize, asteroid::Impact, Hit)> {
+) -> Option<(usize, asteroid::Impact)> {
     blasts.iter().enumerate().find_map(|(i, blast)| {
-        asteroid.interact_blast(rng, blast).map(|impact| {
-            let (a, b) = blast.endpoints();
-            let hit = Hit {
-                offset: asteroid.center().distance_to_line(&a, &b),
-                radius: asteroid.radius(),
-                distance: blast.distance_traveled(),
-            };
-            (i, impact, hit)
-        })
+        asteroid
+            .interact_blast(rng, blast)
+            .map(|impact| (i, impact))
     })
 }
 

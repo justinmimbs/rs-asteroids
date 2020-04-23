@@ -8,8 +8,6 @@ use crate::iter::EdgesCycleIterator;
 use crate::motion::{Collide, Movement, Placement};
 use crate::particle::{Dispersion, Particle};
 
-pub const MAX_RADIUS: f64 = 55.0;
-pub const MIN_RADIUS: f64 = 18.0;
 const MIN_AREA: f64 = 400.0;
 
 pub struct Impact {
@@ -27,7 +25,7 @@ pub struct Asteroid {
 
 impl Asteroid {
     pub fn new(rng: &mut Pcg32) -> Self {
-        let radius: f64 = rng.gen_range(MIN_RADIUS, MAX_RADIUS);
+        let radius: f64 = rng.gen_range(18.0, 55.0);
         let polygon = Asteroid::shape(rng, radius);
         Asteroid {
             radius,

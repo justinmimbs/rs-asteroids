@@ -178,7 +178,7 @@ impl Game {
 
                 if timer.is_elapsed() || controls.start() {
                     self.state = Game::level_intro(
-                        *score + level.score,
+                        *score + level.score(),
                         level.number + 1,
                         &self.bounds,
                         &self.font,
@@ -272,7 +272,7 @@ impl Game {
             MainTitle { .. } => Vec::new(),
             LevelIntro { score, .. } => Game::display_score(*score, &self.bounds, &self.font),
             ActiveLevel { score, level, .. } => {
-                Game::display_score(*score + level.score, &self.bounds, &self.font)
+                Game::display_score(*score + level.score(), &self.bounds, &self.font)
             }
         }
     }
