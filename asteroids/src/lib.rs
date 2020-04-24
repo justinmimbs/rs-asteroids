@@ -51,7 +51,7 @@ impl Controls {
 pub struct Game {
     bounds: Size,
     font: FontLibrary,
-    // high_score: u32,
+    high_score: u32,
     state: State,
 }
 
@@ -100,14 +100,16 @@ impl Game {
             medium: Font::new(96.0),
             large: Font::new(144.0),
         };
+        let high_score = 0;
         Game {
-            state: Game::main_title(&bounds, &font),
+            state: Game::main_title(&bounds, &font, high_score),
             bounds,
             font,
+            high_score,
         }
     }
 
-    fn main_title(bounds: &Size, font: &FontLibrary) -> State {
+    fn main_title(bounds: &Size, font: &FontLibrary, high_score: u32) -> State {
         let mut rng = Pcg32::seed_from_u64(1979);
         let center = bounds.center();
         let mut text = font.large.typeset_line(Align::Center, &center, "ASTEROIDS");
@@ -116,6 +118,7 @@ impl Game {
             &Point::new(center.x, center.y + 3.0 * font.small.height()),
             "PRESS START",
         ));
+        text.extend(Game::display_score(high_score, bounds, font));
         MainTitle {
             text,
             asteroids: Asteroid::field(&mut rng, bounds, 12, 0.0),
@@ -230,7 +233,11 @@ impl Game {
             } => {
                 timer.step(dt);
                 if timer.is_elapsed() {
-                    self.state = Game::main_title(&self.bounds, &self.font);
+                    let final_score = *score + level.score();
+                    if self.high_score < final_score {
+                        self.high_score = final_score;
+                    }
+                    self.state = Game::main_title(&self.bounds, &self.font, self.high_score);
                 } else if controls.start() {
                     self.state =
                         Game::level_intro(*score, level.number(), &self.bounds, &self.font);
