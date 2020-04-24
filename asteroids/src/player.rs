@@ -34,10 +34,10 @@ const NOZZLE: Point = Point { x: -19.0, y: 5.0 };
 
 const SPACESHIP_MASS: f64 = 300.0;
 
-const TURNING_SPEED: f64 = 0.7; // radians / second
+const TURNING_SPEED: f64 = 0.5; // radians / second
 const THRUST_SPEED: f64 = 35.0; // px / second
 const POSITION_FRICTION: f64 = 0.98;
-const ROTATION_FRICTION: f64 = 0.9;
+const ROTATION_FRICTION: f64 = 0.92;
 
 const FIRING_INTERVAL: f64 = 1.0 / 6.0; // seconds (6 hz)
 const BLAST_SPEED: f64 = 800.0; // px / second
@@ -287,16 +287,16 @@ impl Player {
             let mut particles = Dispersion::new(
                 self.placement.position.clone(),
                 self.movement.velocity.scale(0.5),
-                150.0,
-                120.0,
+                170.0,
+                140.0,
             )
-            .burst(rng, speed.sqrt().ceil() as u32);
+            .burst(rng, speed.sqrt().ceil().min(18.0) as u32);
 
             let dispersion = Dispersion::new(
                 self.placement.position.clone(),
                 self.movement.velocity.clone(),
-                speed,
-                speed,
+                speed.min(150.0),
+                speed.min(150.0),
             );
             particles.append(&mut dispersion.explode(rng, (self.hull().iter()).edges_cycle()));
             particles.append(&mut dispersion.explode(rng, (self.interior().iter()).edges()));
