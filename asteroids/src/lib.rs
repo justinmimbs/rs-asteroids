@@ -17,9 +17,36 @@ pub use blast::Blast;
 use geometry::{Point, Polyline, Size};
 pub use level::Level;
 pub use particle::{Dispersion, Particle};
-pub use player::{Controls, Player};
+pub use player::Player;
 use typography::{Align, Font};
 use util::Timer;
+
+pub struct Controls(u32);
+
+impl Controls {
+    pub fn new(input: u32) -> Self {
+        Controls(input)
+    }
+
+    pub fn left(&self) -> bool {
+        self.0 & 1 != 0
+    }
+    pub fn right(&self) -> bool {
+        self.0 & 2 != 0
+    }
+    pub fn thrust(&self) -> bool {
+        self.0 & 4 != 0
+    }
+    pub fn fire(&self) -> bool {
+        self.0 & 8 != 0
+    }
+    pub fn shield(&self) -> bool {
+        self.0 & 16 != 0
+    }
+    pub fn start(&self) -> bool {
+        self.0 & 32 != 0
+    }
+}
 
 pub struct Game {
     bounds: Size,
@@ -157,12 +184,12 @@ impl Game {
             } => {
                 level.step(dt, &self.bounds, controls);
 
-                if level.asteroids.is_empty() {
+                if level.asteroids().is_empty() {
                     *state = Cleared {
                         text: Vec::new(),
                         timer: Timer::new(3.0),
                     };
-                } else if level.player.is_none() {
+                } else if level.player().is_none() {
                     *state = Destroyed {
                         text: Vec::new(),
                         timer: Timer::new(7.0),
@@ -179,7 +206,7 @@ impl Game {
                 if timer.is_elapsed() || controls.start() {
                     self.state = Game::level_intro(
                         *score + level.score(),
-                        level.number + 1,
+                        level.number() + 1,
                         &self.bounds,
                         &self.font,
                     );
@@ -205,7 +232,8 @@ impl Game {
                 if timer.is_elapsed() {
                     self.state = Game::main_title(&self.bounds, &self.font);
                 } else if controls.start() {
-                    self.state = Game::level_intro(*score, level.number, &self.bounds, &self.font);
+                    self.state =
+                        Game::level_intro(*score, level.number(), &self.bounds, &self.font);
                 } else {
                     level.step(dt, &self.bounds, controls);
 
@@ -230,7 +258,7 @@ impl Game {
 
     pub fn player(&self) -> &Option<Player> {
         if let ActiveLevel { level, .. } = &self.state {
-            &level.player
+            &level.player()
         } else {
             &None
         }
@@ -239,19 +267,19 @@ impl Game {
         match &self.state {
             MainTitle { asteroids, .. } => &asteroids,
             LevelIntro { asteroids, .. } => &asteroids,
-            ActiveLevel { level, .. } => &level.asteroids,
+            ActiveLevel { level, .. } => &level.asteroids(),
         }
     }
     pub fn blasts(&self) -> &[Blast] {
         if let ActiveLevel { level, .. } = &self.state {
-            &level.blasts
+            &level.blasts()
         } else {
             &[]
         }
     }
     pub fn particles(&self) -> &[Particle] {
         if let ActiveLevel { level, .. } = &self.state {
-            &level.particles
+            &level.particles()
         } else {
             &[]
         }

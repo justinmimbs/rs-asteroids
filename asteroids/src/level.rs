@@ -9,7 +9,8 @@ use crate::geometry::Size;
 use crate::motion::Collide;
 use crate::particle::Particle;
 use crate::player;
-use crate::player::{Controls, Player};
+use crate::player::Player;
+use crate::Controls;
 
 struct Stats {
     blasts_fired: u32,
@@ -35,12 +36,12 @@ impl Stats {
 
 pub struct Level {
     rng: Pcg32,
-    pub number: u8,
+    number: u8,
     stats: Stats,
-    pub player: Option<Player>,
-    pub asteroids: Vec<Asteroid>,
-    pub blasts: Vec<Blast>,
-    pub particles: Vec<Particle>,
+    player: Option<Player>,
+    asteroids: Vec<Asteroid>,
+    blasts: Vec<Blast>,
+    particles: Vec<Particle>,
 }
 
 impl Level {
@@ -65,8 +66,23 @@ impl Level {
         Asteroid::field(&mut Level::rng(number), bounds, count, 100.0)
     }
 
+    pub fn number(&self) -> u8 {
+        self.number
+    }
     pub fn score(&self) -> u32 {
         self.stats.score().ceil() as u32
+    }
+    pub fn player(&self) -> &Option<Player> {
+        &self.player
+    }
+    pub fn asteroids(&self) -> &Vec<Asteroid> {
+        &self.asteroids
+    }
+    pub fn blasts(&self) -> &Vec<Blast> {
+        &self.blasts
+    }
+    pub fn particles(&self) -> &Vec<Particle> {
+        &self.particles
     }
 
     pub fn step(&mut self, dt: f64, bounds: &Size, controls: Controls) -> () {

@@ -10,6 +10,7 @@ use crate::motion;
 use crate::motion::{Collide, Movement, Placement};
 use crate::particle::{Dispersion, Particle};
 use crate::util::{Interval, Timer};
+use crate::Controls;
 
 const HULL: [Point; 7] = [
     Point { x: -19.0, y: -10.0 },
@@ -44,33 +45,6 @@ const BLAST_SPEED: f64 = 800.0; // px / second
 const THRUSTING_INTERVAL: f64 = 1.0 / 12.0; // seconds (12 hz)
 const EXHAUST_SPEED: f64 = 120.0; // px / second
 const EXHAUST_MAX_AGE: f64 = 0.2; // seconds
-
-pub struct Controls(u32);
-
-impl Controls {
-    pub fn new(input: u32) -> Self {
-        Controls(input)
-    }
-
-    pub fn left(&self) -> bool {
-        self.0 & 1 != 0
-    }
-    pub fn right(&self) -> bool {
-        self.0 & 2 != 0
-    }
-    pub fn thrust(&self) -> bool {
-        self.0 & 4 != 0
-    }
-    pub fn fire(&self) -> bool {
-        self.0 & 8 != 0
-    }
-    pub fn shield(&self) -> bool {
-        self.0 & 16 != 0
-    }
-    pub fn start(&self) -> bool {
-        self.0 & 32 != 0
-    }
-}
 
 struct Spaceship {
     radius: f64,

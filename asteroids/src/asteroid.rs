@@ -8,8 +8,6 @@ use crate::iter::EdgesCycleIterator;
 use crate::motion::{Collide, Movement, Placement};
 use crate::particle::{Dispersion, Particle};
 
-const MIN_AREA: f64 = 400.0;
-
 pub struct Impact {
     pub fragments: Vec<Asteroid>,
     pub particles: Vec<Particle>,
@@ -159,7 +157,7 @@ impl Asteroid {
                         .add(&impact_movement)
                 };
 
-                if fragment.area() < MIN_AREA {
+                if fragment.area() < 400.0 {
                     let mut fragment_particles = Dispersion::new(
                         fragment.center().clone(),
                         fragment.movement().velocity.clone(),
