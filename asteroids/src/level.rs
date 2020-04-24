@@ -12,27 +12,47 @@ use crate::player;
 use crate::player::Player;
 use crate::Controls;
 
-struct Stats {
-    blasts_fired: u32,
-    asteroids_hit: u32,
-    mass_cleared: f64,
-}
+mod stats {
+    pub struct Stats {
+        fired: u32,
+        hit: u32,
+        cleared: f64,
+        score: u32, // cached
+    }
 
-impl Stats {
-    fn new() -> Self {
-        Stats {
-            blasts_fired: 0,
-            asteroids_hit: 0,
-            mass_cleared: 0.0,
+    impl Stats {
+        pub fn new() -> Self {
+            Stats {
+                fired: 0,
+                hit: 0,
+                cleared: 0.0,
+                score: 0,
+            }
+        }
+        pub fn increment_fired(&mut self) {
+            self.fired += 1;
+            self.refresh_score();
+        }
+        pub fn increment_hit(&mut self) {
+            self.hit += 1;
+            self.refresh_score();
+        }
+        pub fn add_cleared(&mut self, mass: f64) {
+            self.cleared += mass;
+            self.refresh_score();
+        }
+        fn refresh_score(&mut self) {
+            let efficiency = (self.cleared / self.fired as f64) / 400.0;
+            let accuracy = self.hit as f64 / self.fired as f64;
+            self.score = (self.cleared * efficiency.sqrt() * accuracy).round() as u32;
+        }
+        pub fn score(&self) -> u32 {
+            self.score
         }
     }
-
-    fn score(&self) -> f64 {
-        let efficiency = (self.mass_cleared / self.blasts_fired as f64) / 400.0;
-        let accuracy = self.asteroids_hit as f64 / self.blasts_fired as f64;
-        self.mass_cleared * efficiency.sqrt() * accuracy
-    }
 }
+
+use stats::Stats;
 
 pub struct Level {
     rng: Pcg32,
@@ -70,7 +90,7 @@ impl Level {
         self.number
     }
     pub fn score(&self) -> u32 {
-        self.stats.score().ceil() as u32
+        self.stats.score()
     }
     pub fn player(&self) -> &Option<Player> {
         &self.player
@@ -95,7 +115,7 @@ impl Level {
         if let Some(player) = &mut self.player {
             player.step(dt, bounds, controls);
             if let Some(blast) = player.fire_blast() {
-                self.stats.blasts_fired += 1;
+                self.stats.increment_fired();
                 self.blasts.push(blast);
             }
         }
@@ -122,8 +142,8 @@ impl Level {
                 interact_asteroid_blasts(&mut self.rng, &asteroid, &self.blasts)
             {
                 let remaining_mass = impact.fragments.iter().map(|f| f.mass()).sum::<f64>();
-                self.stats.asteroids_hit += 1;
-                self.stats.mass_cleared += asteroid.mass() - remaining_mass;
+                self.stats.increment_hit();
+                self.stats.add_cleared(asteroid.mass() - remaining_mass);
                 //
                 self.blasts.remove(i);
                 asteroids.append(&mut impact.fragments);
