@@ -4,7 +4,7 @@ use std::f64::consts::PI;
 
 use crate::blast::Blast;
 use crate::geometry::{Circle, Point, Polygon, Size};
-use crate::iter::{EdgesCycleIterator, MaxLengthIterator};
+use crate::iter::EdgesCycleIterator;
 use crate::motion::{Collide, Movement, Placement};
 use crate::particle::{Dispersion, Particle};
 
@@ -158,7 +158,7 @@ impl Asteroid {
                 };
 
                 if fragment.area() < 400.0 {
-                    let length = rng.gen_range(8.0, 30.0);
+                    let mut rng2 = rng.clone();
                     let mut fragment_particles = Dispersion::new(
                         fragment.center().clone(),
                         fragment.movement().velocity.clone(),
@@ -167,7 +167,9 @@ impl Asteroid {
                     )
                     .explode(
                         rng,
-                        fragment.boundary().iter().edges_cycle().max_length(length),
+                        (fragment.boundary().into_iter())
+                            .edges_cycle()
+                            .flat_map(|segment| fracture_line(&mut rng2, segment)),
                     );
                     particles.append(&mut fragment_particles);
                 } else {
@@ -200,5 +202,25 @@ impl Collide for Asteroid {
     }
     fn mass(&self) -> f64 {
         self.area
+    }
+}
+
+fn fracture_line(rng: &mut Pcg32, segment: (Point, Point)) -> Vec<(Point, Point)> {
+    let target_length: f64 = rng.gen_range(4.0, 24.0);
+    match (segment.0.distance(&segment.1) / target_length).ceil() as usize {
+        0 => vec![],
+        1 => vec![segment],
+        n => {
+            let mut vec = Vec::with_capacity(n);
+            let mut a = segment.0;
+            for i in 1..n {
+                let t = rng.gen_range(0.0, (i + 1) as f64 / n as f64);
+                let b = a.interpolate(&segment.1, t);
+                vec.push((a, b.clone()));
+                a = b;
+            }
+            vec.push((a, segment.1));
+            vec
+        }
     }
 }
