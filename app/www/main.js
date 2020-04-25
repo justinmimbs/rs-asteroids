@@ -25,7 +25,6 @@ async function main() {
     drawingCanvas.width = 3 * width;
     drawingCanvas.height = 3 * height;
     drawingContext.strokeStyle = '#EAF9FF';
-    drawingContext.lineWidth = 1.5;
     drawingContext.lineCap = 'round';
     drawingContext.lineJoin = 'round';
 
@@ -142,6 +141,7 @@ function draw() {
 function drawPoints(context, points, index, length, alpha, isClosed) {
     context.beginPath();
     context.globalAlpha = alpha;
+    context.lineWidth = 0.6 + alpha;
     context.moveTo(points[index * 2], points[index * 2 + 1]);
     for (let i = index + 1; i < index + length; i += 1) {
         context.lineTo(points[i * 2], points[i * 2 + 1]);
