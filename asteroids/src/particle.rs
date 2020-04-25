@@ -56,7 +56,7 @@ const BURST_DEVIATION: Deviation = Deviation {
 const EXPLODE_DEVIATION: Deviation = Deviation {
     scale_speed: 0.5,
     scale_distance: 0.5,
-    direction: 0.5 * PI,
+    direction: 0.3 * PI,
     angular_velocity: PI,
 };
 

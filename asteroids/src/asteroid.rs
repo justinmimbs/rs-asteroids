@@ -162,8 +162,8 @@ impl Asteroid {
                     let mut fragment_particles = Dispersion::new(
                         fragment.center().clone(),
                         fragment.movement().velocity.clone(),
-                        impact.speed,
-                        impact.speed,
+                        impact.speed.min(150.0) * 1.5,
+                        impact.speed.min(150.0),
                     )
                     .explode(
                         rng,

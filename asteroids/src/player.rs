@@ -295,7 +295,7 @@ impl Player {
             let dispersion = Dispersion::new(
                 self.placement.position.clone(),
                 self.movement.velocity.clone(),
-                speed.min(150.0),
+                speed.min(150.0) * 1.5,
                 speed.min(150.0),
             );
             particles.append(&mut dispersion.explode(rng, (self.hull().iter()).edges_cycle()));
