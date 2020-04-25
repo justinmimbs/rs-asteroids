@@ -4,7 +4,7 @@ use std::f64::consts::PI;
 
 use crate::blast::Blast;
 use crate::geometry::{Circle, Point, Polygon, Size};
-use crate::iter::EdgesCycleIterator;
+use crate::iter::{EdgesCycleIterator, MaxLengthIterator};
 use crate::motion::{Collide, Movement, Placement};
 use crate::particle::{Dispersion, Particle};
 
@@ -158,13 +158,17 @@ impl Asteroid {
                 };
 
                 if fragment.area() < 400.0 {
+                    let length = rng.gen_range(8.0, 30.0);
                     let mut fragment_particles = Dispersion::new(
                         fragment.center().clone(),
                         fragment.movement().velocity.clone(),
                         impact.speed,
                         impact.speed,
                     )
-                    .explode(rng, fragment.boundary().iter().edges_cycle());
+                    .explode(
+                        rng,
+                        fragment.boundary().iter().edges_cycle().max_length(length),
+                    );
                     particles.append(&mut fragment_particles);
                 } else {
                     fragments.push(fragment);

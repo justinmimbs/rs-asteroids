@@ -24,7 +24,7 @@ impl Size {
 // Point/Vector
 
 #[repr(C)]
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 pub struct Point {
     pub x: f64,
     pub y: f64,

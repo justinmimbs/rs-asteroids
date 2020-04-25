@@ -5,12 +5,12 @@ pub struct EdgesCycle<I, T> {
     state: Option<(T, T)>,
 }
 
-impl<I, T> Iterator for EdgesCycle<I, T>
+impl<I> Iterator for EdgesCycle<I, I::Item>
 where
-    I: Iterator<Item = T>,
-    T: Clone,
+    I: Iterator,
+    I::Item: Clone,
 {
-    type Item = (T, T);
+    type Item = (I::Item, I::Item);
 
     fn next(&mut self) -> Option<Self::Item> {
         if let Some(next) = self.iter.next() {
@@ -103,12 +103,12 @@ pub struct Edges<I, T> {
     previous: Option<T>,
 }
 
-impl<I, T> Iterator for Edges<I, T>
+impl<I> Iterator for Edges<I, I::Item>
 where
-    I: Iterator<Item = T>,
-    T: Clone,
+    I: Iterator,
+    I::Item: Clone,
 {
-    type Item = (T, T);
+    type Item = (I::Item, I::Item);
 
     fn next(&mut self) -> Option<Self::Item> {
         if let Some(next) = self.iter.next() {
@@ -176,6 +176,123 @@ mod test_edges {
         let mut iter = (0..3).edges();
         assert_eq!(iter.next(), Some((0, 1)));
         assert_eq!(iter.next(), Some((1, 2)));
+        assert_eq!(iter.next(), None);
+    }
+}
+
+// iterator adaptor: max_length
+
+use crate::geometry::Point;
+use core::borrow::Borrow;
+
+pub struct MaxLength<I> {
+    iter: I,
+    length: f64,
+    buffer: Vec<(Point, Point)>,
+}
+
+impl<I, P> Iterator for MaxLength<I>
+where
+    I: Iterator<Item = (P, P)>,
+    P: Borrow<Point>,
+{
+    type Item = (Point, Point);
+
+    fn next(&mut self) -> Option<Self::Item> {
+        if let Some(segment) = self.buffer.pop() {
+            Some(segment)
+        } else if let Some((a, b)) = self.iter.next() {
+            let a = a.borrow().clone();
+            let b = b.borrow().clone();
+            let length = a.distance(&b);
+            if length <= self.length {
+                Some((a, b))
+            } else {
+                let n = (length / self.length).ceil();
+                // build buffer in reverse order
+                self.buffer = (0..n as u32)
+                    .map(|i| {
+                        let x = a.interpolate(&b, (n - (i + 1) as f64) / n);
+                        let y = a.interpolate(&b, (n - i as f64) / n);
+                        (x, y)
+                    })
+                    .collect::<Vec<_>>();
+                self.buffer.pop()
+            }
+        } else {
+            None
+        }
+    }
+}
+
+// trait with max_length method
+
+pub trait MaxLengthIterator: Sized + Iterator {
+    fn max_length(self, length: f64) -> MaxLength<Self>;
+}
+
+// _blanket implementation_ of MaxLengthIterator for all types implementing Iterator<Item=(Point, Point)>
+
+impl<I, P> MaxLengthIterator for I
+where
+    I: Iterator<Item = (P, P)>,
+    P: Borrow<Point>,
+{
+    fn max_length(self, length: f64) -> MaxLength<Self> {
+        MaxLength {
+            iter: self,
+            length,
+            buffer: Vec::new(),
+        }
+    }
+}
+
+#[cfg(test)]
+mod test_max_length {
+    use super::*;
+
+    fn point(x: f64, y: f64) -> Point {
+        Point::new(x, y)
+    }
+
+    #[test]
+    fn test_owned_points() {
+        let segments: Vec<(Point, Point)> = vec![];
+        let mut iter = segments.into_iter().max_length(10.0);
+        assert_eq!(iter.next(), None);
+    }
+
+    #[test]
+    fn test_borrowed_points() {
+        let segments: Vec<(&Point, &Point)> = vec![];
+        let mut iter = segments.into_iter().max_length(10.0);
+        assert_eq!(iter.next(), None);
+    }
+
+    #[test]
+    fn test_break_0() {
+        let points = vec![point(0.0, 0.0), point(10.0, 0.0)];
+        let mut iter = points.iter().edges().max_length(10.0);
+        assert_eq!(iter.next(), Some((point(0.0, 0.0), point(10.0, 0.0))));
+        assert_eq!(iter.next(), None);
+    }
+
+    #[test]
+    fn test_break_1() {
+        let points = vec![point(0.0, 0.0), point(12.0, 0.0)];
+        let mut iter = points.iter().edges().max_length(10.0);
+        assert_eq!(iter.next(), Some((point(0.0, 0.0), point(6.0, 0.0))));
+        assert_eq!(iter.next(), Some((point(6.0, 0.0), point(12.0, 0.0))));
+        assert_eq!(iter.next(), None);
+    }
+
+    #[test]
+    fn test_break_2() {
+        let points = vec![point(0.0, 0.0), point(24.0, 0.0)];
+        let mut iter = points.iter().edges().max_length(10.0);
+        assert_eq!(iter.next(), Some((point(0.0, 0.0), point(8.0, 0.0))));
+        assert_eq!(iter.next(), Some((point(8.0, 0.0), point(16.0, 0.0))));
+        assert_eq!(iter.next(), Some((point(16.0, 0.0), point(24.0, 0.0))));
         assert_eq!(iter.next(), None);
     }
 }
