@@ -5,10 +5,11 @@ const height = 900;
 
 const drawingCanvas = document.createElement('canvas');
 const drawingContext = drawingCanvas.getContext('2d');
+const screenCanvas = document.createElement('canvas');
+const screenContext = screenCanvas.getContext('2d');
 const effectsCanvas = document.createElement('canvas');
 const effectsContext = effectsCanvas.getContext('2d');
-const screenCanvas = document.querySelector('#canvas');
-const screenContext = screenCanvas.getContext('2d');
+const effects = effectsContext.filter ? true : false;
 
 let app;
 let memory;
@@ -28,19 +29,18 @@ async function main() {
     drawingContext.lineCap = 'round';
     drawingContext.lineJoin = 'round';
 
-    effectsCanvas.width = width;
-    effectsCanvas.height = height;
-    effectsContext.filter = 'blur(17px)';
-    effectsContext.globalAlpha = 0.5;
-
     screenCanvas.width = width;
     screenCanvas.height = height;
 
-    window.addEventListener('keydown', handleKey(true));
-    window.addEventListener('keyup', handleKey(false));
+    effectsCanvas.width = width;
+    effectsCanvas.height = height;
 
     draw();
     requestAnimationFrame(loop);
+
+    window.document.body.appendChild(screenCanvas);
+    window.addEventListener('keydown', handleKey(true));
+    window.addEventListener('keyup', handleKey(false));
 }
 
 const controls = {
@@ -122,19 +122,23 @@ function draw() {
     }
     list.free();
 
-    // effects
-    effectsContext.clearRect(0, 0, width, height);
-    effectsContext.drawImage(screenCanvas, 0, 0, width, height);
-
-    // screen
-    screenContext.clearRect(0, 0, width, height);
-    // effects -> screen
-    screenContext.drawImage(effectsCanvas, 0, 0, width, height);
     // drawing -> screen
+    screenContext.clearRect(0, 0, width, height);
     for (let row in [ 0, 1, 2 ]) {
         for (let col in [ 0, 1, 2 ]) {
             screenContext.drawImage(drawingCanvas, col * width, row * height, width, height, 0, 0, width, height);
         }
+    }
+
+    // effects -> screen
+    if (effects) {
+        effectsContext.clearRect(0, 0, width, height);
+        effectsContext.globalAlpha = 0.4;
+        effectsContext.filter = 'blur(20px)';
+        effectsContext.drawImage(screenCanvas, 0, 0, width, height);
+        effectsContext.filter = 'blur(3px)';
+        effectsContext.drawImage(screenCanvas, 0, 0, width, height);
+        screenContext.drawImage(effectsCanvas, 0, 0, width, height);
     }
 }
 
