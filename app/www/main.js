@@ -5,11 +5,11 @@ const height = 900;
 
 const drawingCanvas = document.createElement('canvas');
 const drawingContext = drawingCanvas.getContext('2d');
-const screenCanvas = document.createElement('canvas');
-const screenContext = screenCanvas.getContext('2d');
 const effectsCanvas = document.createElement('canvas');
 const effectsContext = effectsCanvas.getContext('2d');
 const effects = effectsContext.filter ? true : false;
+const screenCanvas = document.querySelector('canvas');
+const screenContext = screenCanvas.getContext('2d');
 
 let app;
 let memory;
@@ -18,29 +18,31 @@ let time;
 main();
 
 async function main() {
-    const wasm = await init();
-    memory = wasm.memory;
-    app = App.new();
-    time = Date.now();
-
     drawingCanvas.width = 3 * width;
     drawingCanvas.height = 3 * height;
     drawingContext.strokeStyle = '#EAF9FF';
     drawingContext.lineCap = 'round';
     drawingContext.lineJoin = 'round';
 
-    screenCanvas.width = width;
-    screenCanvas.height = height;
-
     effectsCanvas.width = width;
     effectsCanvas.height = height;
 
-    draw();
-    requestAnimationFrame(loop);
+    screenCanvas.width = width;
+    screenCanvas.height = height;
+    screenCanvas.style.opacity = '1';
 
-    window.document.body.appendChild(screenCanvas);
+    document.querySelector('main').style.visibility = 'visible';
+
     window.addEventListener('keydown', handleKey(true));
     window.addEventListener('keyup', handleKey(false));
+
+    const wasm = await init();
+    memory = wasm.memory;
+    app = App.new();
+    time = Date.now();
+
+    draw();
+    requestAnimationFrame(loop);
 }
 
 const controls = {

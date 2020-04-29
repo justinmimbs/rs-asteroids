@@ -9,18 +9,61 @@ html, body {
     padding: 0;
     height: 100%;
     background: #000000;
+    color: #555555;
+    font-family: Menlo, Consolas, monospace;
+    font-size: 20px;
+    line-height: 20px;
 }
 body {
     display: flex;
     justify-content: center;
     align-items: center;
+    font-size: 14px;
+}
+main {
+    visibility: hidden;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
 }
 canvas {
     background: radial-gradient(farthest-corner circle at center, #21272D, #17191B);
+    border-radius: 3px;
+    opacity: 0;
+    transition: opacity 2s ease-out;
+}
+.instructions {
+    margin-top: 1rem;
+    display: grid;
+    grid-template-rows: 2rem 2rem;
+    grid-template-columns: repeat(6, 6rem);
+    grid-auto-flow: column;
+    justify-items: center;
+}
+span {
+    display: block;
+    height: 1.5rem;
+    min-width: 1.5rem;
+    padding: calc(0.25rem - 2px) 0.5rem;
+    text-align: center;
+    box-sizing: border-box;
+    border: 1.5px solid #333333;
+    border-radius: 3px;
 }
         </style>
     </head>
     <body>
+        <main>
+            <canvas></canvas>
+            <div class="instructions">
+                <span>S</span><label>Shield</label>
+                <span>F</span><label>Fire</label>
+                <span>◀</span><label>Rotate Left</label>
+                <span>▲</span><label>Thrust</label>
+                <span>▶</span><label>Rotate Right</label>
+                <span>Enter</span><label>Start</label>
+            </div>
+        </main>
         <script src="main.js" type="module"></script>
     </body>
 </html>
