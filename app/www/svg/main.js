@@ -20,10 +20,14 @@ let memory;
 let time;
 let looping = 0;
 
+const frames = [];
+const slider = document.querySelector('input');
+
 main();
 
 async function main() {
-    document.querySelector('main').appendChild(screen);
+    const container = document.querySelector('main');
+    container.insertBefore(screen, container.firstChild);
 
     window.addEventListener('keydown', handleKey(true));
     window.addEventListener('keyup', handleKey(false));
@@ -32,6 +36,7 @@ async function main() {
             playPause();
         }
     });
+    slider.addEventListener('input', (_) => scrub(slider.value));
 
     const wasm = await init();
     memory = wasm.memory;
@@ -44,18 +49,33 @@ function playPause() {
     if (!looping) {
         time = performance.now();
         loop(time);
+        slider.style.visibility = 'hidden';
     } else {
         cancelAnimationFrame(looping);
         looping = 0;
-        draw();
+        slider.style.visibility = 'visible';
+        slider.max = frames.length - 1;
+        slider.value = slider.max;
+        scrub(slider.value);
+    }
+}
+
+function scrub(i) {
+    if (!looping && frames[i]) {
+        draw(frames[i]);
     }
 }
 
 function loop(now) {
     app.step((now - time) / 1000, bitpackControls());
-    draw();
     time = now;
     looping = requestAnimationFrame(loop);
+
+    if (600 <= frames.length) {
+        frames.shift();
+    }
+    frames.push(screenData());
+    draw(frames[frames.length - 1]);
 }
 
 // controls
@@ -117,9 +137,7 @@ function keyToControl(key) {
 
 // drawing
 
-function draw() {
-    const data = screenData();
-
+function draw(data) {
     // clear
     while (screen.firstChild) {
         screen.removeChild(screen.firstChild);
