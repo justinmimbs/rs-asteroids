@@ -136,7 +136,7 @@ impl Asteroid {
                 impact.point.clone(),
                 self.movement().velocity.clone(),
                 100.0,
-                50.0,
+                100.0,
             )
             .burst(rng, (self.radius() / 4.0).ceil() as u32);
 

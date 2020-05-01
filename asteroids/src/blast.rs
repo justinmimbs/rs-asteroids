@@ -5,7 +5,7 @@ use crate::motion::Collide;
 use crate::util::Timer;
 
 const MAX_DISTANCE: f64 = 1200.0;
-const MASS: f64 = 100.0;
+const MASS: f64 = 200.0;
 
 pub struct Blast {
     position: Point,

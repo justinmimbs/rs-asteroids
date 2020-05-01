@@ -267,6 +267,14 @@ impl Player {
     }
 
     fn impact(&mut self, rng: &mut Pcg32, point: &Point, speed: f64) -> Impact {
+        let mut particles = Dispersion::new(
+            point.clone(),
+            self.movement.velocity.scale(0.5),
+            speed * 0.5,
+            speed * 0.2,
+        )
+        .burst(rng, (speed.sqrt() * 0.5).ceil() as u32);
+
         if self.is_shielding() {
             // bounce
             self.aux = Aux::Shielding {
@@ -274,23 +282,19 @@ impl Player {
             };
             Impact {
                 destroyed: false,
-                particles: Dispersion::new(
-                    point.clone(),
-                    self.movement.velocity.scale(0.5),
-                    speed * 0.5,
-                    speed * 0.2,
-                )
-                .burst(rng, (speed.sqrt() * 0.5).ceil() as u32),
+                particles,
             }
         } else {
             // explode
-            let mut particles = Dispersion::new(
-                self.placement.position.clone(),
-                self.movement.velocity.scale(0.5),
-                170.0,
-                140.0,
-            )
-            .burst(rng, speed.sqrt().ceil().min(18.0) as u32);
+            particles.append(
+                &mut Dispersion::new(
+                    self.placement.position.clone(),
+                    self.movement.velocity.scale(0.5),
+                    170.0,
+                    140.0,
+                )
+                .burst(rng, speed.sqrt().ceil().min(18.0) as u32),
+            );
 
             let dispersion = Dispersion::new(
                 self.placement.position.clone(),
