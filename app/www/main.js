@@ -39,11 +39,19 @@ async function main() {
     const wasm = await init();
     memory = wasm.memory;
     app = App.new();
-    time = Date.now();
+    time = performance.now();
 
+    loop(time);
+}
+
+function loop(now) {
+    app.step((now - time) / 1000, bitpackControls());
+    time = now;
     draw();
     requestAnimationFrame(loop);
 }
+
+// controls
 
 const controls = {
     left: false,
@@ -100,13 +108,7 @@ function keyToControl(key) {
     }
 }
 
-function loop() {
-    const now = Date.now();
-    app.step((now - time) / 1000, bitpackControls());
-    time = now;
-    draw();
-    requestAnimationFrame(loop);
-}
+// drawing
 
 function draw() {
     // render

@@ -9,17 +9,16 @@ const screen = node('svg',
         height,
         fill: 'none',
         stroke: '#EAF9FF',
-        ['stroke-linecap']: 'round',
-        ['stroke-linejoin']: 'round',
+        'stroke-linecap': 'round',
+        'stroke-linejoin': 'round',
     },
     []
 );
 
-let effects = false;
-
 let app;
 let memory;
 let time;
+let looping = 0;
 
 main();
 
@@ -28,22 +27,35 @@ async function main() {
 
     window.addEventListener('keydown', handleKey(true));
     window.addEventListener('keyup', handleKey(false));
+    window.addEventListener('keydown', function(event) {
+        if (event.key === ' ') {
+            playPause();
+        }
+    });
 
     const wasm = await init();
     memory = wasm.memory;
     app = App.new();
-    time = Date.now();
 
-    draw();
-    requestAnimationFrame(loop);
+    playPause();
 }
 
-function loop() {
-    const now = Date.now();
+function playPause() {
+    if (!looping) {
+        time = performance.now();
+        loop(time);
+    } else {
+        cancelAnimationFrame(looping);
+        looping = 0;
+        draw();
+    }
+}
+
+function loop(now) {
     app.step((now - time) / 1000, bitpackControls());
-    time = now;
     draw();
-    requestAnimationFrame(loop);
+    time = now;
+    looping = requestAnimationFrame(loop);
 }
 
 // controls
@@ -122,7 +134,7 @@ function draw() {
                 {
                     points: d.points.join(' '),
                     opacity: d.alpha,
-                    ['stroke-width']: 0.6 + d.alpha,
+                    'stroke-width': 0.6 + d.alpha,
                 },
                 []
             )
@@ -132,7 +144,7 @@ function draw() {
     screen.appendChild(node('use', { href: '#' + id }, []));
 
     // effects
-    if (effects) {
+    if (!looping) {
         const blur1 = 'asteroids-blur1';
         const blur2 = 'asteroids-blur2';
         screen.appendChild(
