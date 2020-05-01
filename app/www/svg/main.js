@@ -7,6 +7,8 @@ const screen = node('svg',
     {
         width,
         height,
+        viewBox: `0 0 ${width} ${height}`,
+        style: 'background: radial-gradient(farthest-corner circle at center, #21272D, #17191B);',
         fill: 'none',
         stroke: '#EAF9FF',
         'stroke-linecap': 'round',
@@ -33,6 +35,7 @@ async function main() {
     window.addEventListener('keyup', handleKey(false));
     window.addEventListener('keydown', function(event) {
         if (event.key === ' ') {
+            event.preventDefault();
             playPause();
         }
     });

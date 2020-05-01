@@ -23,6 +23,7 @@ async function main() {
     drawingContext.strokeStyle = '#EAF9FF';
     drawingContext.lineCap = 'round';
     drawingContext.lineJoin = 'round';
+    drawingContext.setTransform(1, 0, 0, 1, width, height);
 
     effectsCanvas.width = width;
     effectsCanvas.height = height;
