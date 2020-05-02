@@ -271,6 +271,19 @@ impl Polygon<'_> {
             .collect()
     }
 
+    pub fn contains(self, p: &Point) -> bool {
+        (self.0.iter()).edges_cycle().fold(false, |r, (a, b)| {
+            if ((a.y < p.y) != (b.y < p.y))
+                && (a.x + (b.x - a.x) * (p.y - a.y) / (b.y - a.y) // x at intersection of ab
+                        < p.x)
+            {
+                !r
+            } else {
+                r
+            }
+        })
+    }
+
     pub fn area(self) -> f64 {
         (self.0.iter())
             .edges_cycle()

@@ -63,13 +63,20 @@ impl Blast {
         let (head, tail) = self.endpoints();
         if head.distance_squared(object.center()) < object.radius().powi(2) {
             let maybe_impact_point = {
-                let intersections =
-                    Polygon(&object.boundary()).intersections(iter::once((&head, &tail)));
-                if head < tail {
+                let boundary = object.boundary();
+                let intersections = Polygon(&boundary).intersections(iter::once((&head, &tail)));
+                let intersection = if head < tail {
                     intersections.into_iter().min()
                 } else {
                     intersections.into_iter().max()
-                }
+                };
+                intersection.or_else(|| {
+                    if Polygon(&boundary).contains(&head) {
+                        Some(tail)
+                    } else {
+                        None
+                    }
+                })
             };
             if let Some(impact_point) = maybe_impact_point {
                 Some(Impact {
