@@ -3,13 +3,15 @@ import init, { App } from './wasm/app.js';
 const width = 1200;
 const height = 900;
 
+const screenCanvas = document.querySelector('canvas');
+const screenContext = screenCanvas.getContext('2d');
 const drawingCanvas = document.createElement('canvas');
 const drawingContext = drawingCanvas.getContext('2d');
 const effectsCanvas = document.createElement('canvas');
 const effectsContext = effectsCanvas.getContext('2d');
 const effects = effectsContext.filter ? true : false;
-const screenCanvas = document.querySelector('canvas');
-const screenContext = screenCanvas.getContext('2d');
+
+let flat = false;
 
 let app;
 let memory;
@@ -36,6 +38,7 @@ async function main() {
 
     window.addEventListener('keydown', handleKey(true));
     window.addEventListener('keyup', handleKey(false));
+    screenCanvas.addEventListener('click', toggleFlat);
 
     const wasm = await init();
     memory = wasm.memory;
@@ -50,6 +53,11 @@ function loop(now) {
     time = now;
     draw();
     requestAnimationFrame(loop);
+}
+
+function toggleFlat() {
+    flat = !flat;
+    screenCanvas.className = flat ? 'flat' : '';
 }
 
 // controls
@@ -136,7 +144,7 @@ function draw() {
     }
 
     // effects -> screen
-    if (effects) {
+    if (effects && !flat) {
         effectsContext.clearRect(0, 0, width, height);
         effectsContext.globalAlpha = 0.4;
         effectsContext.filter = 'blur(20px)';
