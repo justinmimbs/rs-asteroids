@@ -12,6 +12,8 @@ const effectsContext = effectsCanvas.getContext('2d');
 const effects = effectsContext.filter ? true : false;
 
 let flat = false;
+let frames = 0;
+let seconds = 0;
 
 let app;
 let memory;
@@ -49,10 +51,24 @@ async function main() {
 }
 
 function loop(now) {
-    app.step((now - time) / 1000, bitpackControls());
+    let dt = (now - time) / 1000;
+    app.step(dt, bitpackControls());
     time = now;
     draw();
     requestAnimationFrame(loop);
+
+    // if frame rate is low, enable flat mode
+    if (effects && !flat && dt) {
+        frames += 1;
+        seconds += dt;
+        if (2 <= seconds) {
+            if (frames / seconds < 45) {
+                toggleFlat();
+            }
+            frames = 0;
+            seconds = 0;
+        }
+    }
 }
 
 function toggleFlat() {
