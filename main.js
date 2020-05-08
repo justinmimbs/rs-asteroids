@@ -102,30 +102,32 @@ function handleKey(down) {
         let control = keyToControl(event.key);
         if (control !== null) {
             controls[control] = down;
+            event.preventDefault();
         }
     }
 }
 
 function keyToControl(key) {
-    switch (event.key) {
-        case 'ArrowLeft':
+    switch (event.key.toLowerCase()) {
+        case 'arrowleft':
+        case 'j':
             return 'left';
 
-        case 'ArrowRight':
+        case 'arrowright':
+        case 'l':
             return 'right';
 
-        case 'ArrowUp':
+        case 'arrowup':
+        case 'i':
             return 'thrust';
 
         case 's':
-        case 'S':
             return 'shield';
 
         case 'f':
-        case 'F':
             return 'fire';
 
-        case 'Enter':
+        case 'enter':
             return 'start';
 
         default:
