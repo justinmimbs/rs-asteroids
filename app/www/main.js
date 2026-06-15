@@ -108,7 +108,7 @@ function handleKey(down) {
 }
 
 function keyToControl(key) {
-    switch (event.key.toLowerCase()) {
+    switch (key.toLowerCase()) {
         case 'arrowleft':
         case 'j':
             return 'left';
